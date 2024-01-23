@@ -1,7 +1,6 @@
 
 As mentioned above, we classify fragmentation as being either internal or external. Internal fragmentation is considered wasted space due to alignment and it may sometimes be required for an allocator to allocate a slightly smaller block of memory than a user has requested. Figure~\ref{fig:internal_fragmentation} shows an example of when a user has requested 100 bytes, which has required the allocator to allocate 128 bytes instead due to alignment, where the last 28 bytes as wasted space.
 
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{figures/internal_fragmentation.png}
