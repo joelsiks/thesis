@@ -5,7 +5,7 @@ Since small and medium pages only allow the user to allocate objects in certain 
 
 Small pages allow objects sizes in the range $S_{small} \in [16B, 256KB]$ and medium pages $S_{medium} \in (256KB, 4MB]$. We note that the allowed sizes in the medium range is an integer multiple of the small range, $S_{medium} = \text{16KB} * S_{small}$. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16 KB for medium pages.
 
-With the now limited allocation size range of $S_{small}$ in mind we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the $S_{small}$ range, with a lower-bound of $2^4 = 16$ and an upper-bound of $2^17 = 256KB$. For efficiency reasons, the number of second levels should be a power of two. Additionally, it would be preferable to be able to store all bitmap information in a single word for performance reasons, both in terms of cache efficiency and bit instructions.
+With the now limited allocation size range of $S_{small}$ in mind we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the $S_{small}$ range, with a lower-bound of $2^4 = 16$ and an upper-bound of $2^17 = 256KB$. For efficiency reasons, the number of second levels should be a power of two. Additionally, it would be preferable to be able to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions.
 
 % Additonal benefits are possibility of atomic operations on a 64-bit word.
 
