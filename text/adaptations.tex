@@ -1,11 +1,11 @@
 
 \subsection{Allocation Size for Small and Medium Pages}
 
-Since small and medium pages only allow the user to allocate objects in certain size ranges, we can use this to our advantage to store metadata about the allocator in a more efficient way. Small pages allow objects sizes in the range $S_{small} \in [16B, 256KB]$ and medium pages $S_{medium} \in (256KB, 4MB]$. We note that the allowed sizes in the medium range is an integer multiple of the small range, $S_{medium} = \text{16KB} * S_{small}$. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16 KB for medium pages.
+Since small and medium pages only allow the user to allocate objects in certain size ranges, we can use this to our advantage to store metadata about the allocator in a more efficient way. Small pages allow objects sizes in the range [16B, 256KB] and medium pages (256KB, 4MB]. We note that the allowed sizes in the medium range is a factor of 16KB larger than the small range. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16KB for medium pages.
 
-With the now limited allocation size range of $S_{small}$ in mind we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the $S_{small}$ range, with a lower-bound of $2^4 = 16$ and an upper-bound of $2^{17} = 128KB$. It would be preferable to be able to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions. To stay inside the 64-bit limit we must choose the number of second-levels accordingly. For efficiency reasons, the number of second levels should be a power of two, and the only value this leaves us is 4, which requires $14 * 4 = 56$ bits.
+With the now limited allocation size range for small pages in mind, we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the small page range, with a lower-bound of $2^4 =$ 16B and an upper-bound of $2^{17} =$ 128KB. It would be preferable to be able to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions. To stay inside the 64-bit limit we must choose the number of second-levels accordingly. For efficiency reasons, the number of second levels should be a power of two~\cite{tlsf}, and the only value this leaves us is 4, which requires $14 * 4 =$ 56 bits.
 
-Combining the insight of the number of required first-levels, desire to use a single 64-bit bitmap and the number of second-levels, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the first-level bitmap since it is no longer needed if we can only have one bitmap to look at for all second-levels. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
+Combining the insight of the number of required first-levels, desire to use a single 64-bit bitmap and the number of second-levels, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the first-level bitmap entirely since the new bitmap can be indexed directly using the formula: $I = FL * 4 + SL$, where $FL$ is the first-level index and $SL$ the second-level index. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
 
 \begin{figure}[H]
     \centering
@@ -14,7 +14,7 @@ Combining the insight of the number of required first-levels, desire to use a si
     \label{fig:bitmap_flattening}
 \end{figure}
 
-The relationship between the bitmap and the free-lists is illustrated in Figure~\ref{fig:bitmap_relationship}, closely adhering to the original TLSF design. However, the adaptation now involves indexing the bitmap using both first- and second-level indexes in combination to access the corresponding free-list.
+The relationship between the bitmap and the free-lists is illustrated in Figure~\ref{fig:bitmap_relationship}, closely adhering to the original TLSF design. However, the adaptation now figures out what free-list to look at from the new 64-bit bitmap.
 
 \begin{figure}[H]
     \centering
