@@ -10,7 +10,7 @@ main:
 	pdflatex --synctex=1 $(ENTRYPOINT)
 
 bib:
-	bibtex rapport-mall
+	bibtex $(ENTRYPOINT)
 
 cycle:
 	pdflatex --synctex=1 $(ENTRYPOINT)
