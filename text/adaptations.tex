@@ -1,7 +1,16 @@
 
+% Generalized and specific.
+In this section we describe the adaptations that have been made to the reference implementation in order to make the allocator more suited toward being used in ZGC.
+
+\subsection{General and Specific Allocator}
+
+The first and most important adaptation is re-implementing the reference implementation in a configurable manner to allow for the allocator to be extended while still maintaining a general version of it. The reason behind this is to allow using the allocator in an all-purpose manner while also having an optimized, or altered, version for a more specific purpose. Having both a general and specific version also allows for measuring the efficacy of any adaptation in the specific implementation to the general one.
+
+However, making optimizations might require changes that also changes the general version in a way that does not with a reference implementation. Such trade-offs, which will be discussed in more detail later in this section, could be reasonable when supporting multiple versions of the allocator.
+
 \subsection{Allocation Size for Small and Medium Pages}
 
-Since small and medium pages only allow the user to allocate objects in certain size ranges, we can use this to our advantage to store metadata about the allocator in a more efficient way. Small pages allow objects sizes in the range [16B, 256KB] and medium pages (256KB, 4MB]. We note that the allowed sizes in the medium range is a factor of 16KB larger than the small range. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16KB for medium pages.
+Since small and medium pages only allow the user to allocate in certain size ranges, we can use this to our advantage to store metadata about the allocator in a more efficient way. Small pages allow sizes in the range [16B, 256KB] and medium pages (256KB, 4MB]. We note that the allowed sizes in the medium range is a factor of 16KB larger than the small range. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16KB for medium pages.
 
 With the now limited allocation size range for small pages in mind, we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the small page range, with a lower-bound of $2^4 =$ 16B and an upper-bound of $2^{17} =$ 128KB. It would be preferable to be able to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions. To stay inside the 64-bit limit we must choose the number of second-levels accordingly. For efficiency reasons, the number of second levels should be a power of two~\cite{tlsf}, and the only value this leaves us is 4, which requires $14 * 4 =$ 56 bits.
 
@@ -29,6 +38,84 @@ The relationship between the bitmap and the free-lists is illustrated in Figure~
 % TODO: Cite TLSF paper.
 % Benefits: Reduced memory overhead, cache efficiency, Simplified indexing (and Atomic operations??)
 % Drawbacks: Reduce number of second-level partitions to 4, instead of more, which could have an impact on internal fragmentation.
+
+\subsection{Constructing From Livemap Data}
+
+Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the 'holes' of a page. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer object allocation.
+
+Most allocators start with an unused chunk of memory, allowing them to track all updates that are made so that it always has an up-to-date representation of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need to update the allocator's internal representation to align with the contents of the memory.
+
+The data that represents what the underlying memory contains is the livemap-data that is stored in pages in ZGC. The livemap contain, at set times, the latest information about what the memory contain and can thus be used to update the allocator's representation. The most important aspect to note about the livemap is that it contains the latest information, which allows for batch updates to be made, which can be taken into consideration when designing the API around re-constructing the internal representation.
+
+The construction of the allocator's representation involves a two-step process that extends the allocator's API. Initially, the representation must be cleared so that any previous data that might be inaccurate is not present. Additionally, when clearing, a block is allocated to cover the entirety of the underlying memory. Subsequently, the user invokes a function to free blocks within specified ranges, allowing to selectively ``carve'' segments free memory from the initially allocated block. When freeing ranges of blocks, we only consider three cases: 
+
+\begin{enumerate}
+    \item The range is strictly within an allocated block and does not start nor end on the block's edges.
+    \item The range begins at the start of the block and ends on the end of the block.
+    \item The range starts inside the block and ends on the block's end.
+    \item The range starts at the block's start and ends inside the block.
+\end{enumerate}
+
+We will not consider cases where the range overlaps multiple blocks and start or end on the edge of a block that is not the last or the first block in the physical order. This is because if a user wants to free a consecutive range of 64 bytes for example, they should always free the entire 64 byte range directly and not the first 32 bytes followed by the next 32 bytes. This is done to reduce the complexity of the implementation without affecting functionality for the user significantly.
+
+\subsection{Deferred Coalescing of Blocks}
+
+In the process of allocating and freeing blocks within an allocator, the general preference is to always have as large blocks as possible available to fulfill larger requests. However, in scenarios where numerous small allocations are frequently made and free'd, the emphasis on coalescing blocks to accommodate larger requests in the future may not be worthwhile. Instead, a strategy we call Deferred Coalescing (DC) can be employed.
+
+The idea behind DC is that when the user calls free(), the block being freed is not implicitly attempted to be coalesced with its adjacent physical neighbors. Instead, the allocator's API is extended to include an explicit coalesce operation. This operation scans through all blocks and coalesces as many as possible. Unlike immediate coalescing, this deferred approach postpones the process until a later point when a larger block is required.
+
+The explicit coalesce operation conducts a pass over all blocks, requiring only knowledge of the size of the current block to identify the location of the next block. This eliminates the need to store a pointer to the physical neighbor right before the current block, which is only used when coalescing in a free() call. The algorithm describing how the pass is done is shown in Algorithm~\ref{algorithm:coalesce_blocks}.
+
+\begin{algorithm}[H]
+current = first\_physical\_block\\
+\While{current != nullptr} {
+next = get\_next\_block(current)\;
+\uIf{next != nullptr \textbf{and} current->is\_free() \textbf{and} next->is\_free()} {
+    current = coalesce\_neighbors(current, next)\;
+    insert\_block(current)\;
+}
+\Else {
+    current = next
+}
+}
+\label{algorithm:coalesce_blocks}
+\caption{The algorithm for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list so that the newly coalesced block can be inserted.}
+\end{algorithm}
+
+\subsubsection{Block Header Differences}
+
+If the pointer to the previous physical block is no longer needed, we can redesign the header for it to be removed. 
+
+The default case for the block header is shown for the general version in Figure~\ref{fig:blockheader_large}. Here, the block header consists of the size of the block, the next and prev pointers for free-list linking and a pointer to the previous physical block. This is very similar to the reference implementation, with the change that the next and prev pointers have been moved to right after the size field. The reason for this is that it allows us to share the same header configuration for both the general and specific allocators, but only using some fields in the specific version. The major downside of this, which also deviates from the reference implementation, is that all allocations require a 32 byte header.
+
+% TODO: Disadventageous for small allocations, will have to be measured in practice.
+
+Figure~\ref{fig:blockheader_small} shows the fields that are used in the optimized header, where size is used always for both allocated and free blocks. However, the next and prev pointers are only used in free blocks. This enables us to reduce the constant block header overhead to 8 bytes for all allocations, but requiring and minimum of 16 bytes to be allocated from the user so that the next and prev pointer can be stored for free blocks. The way that the next and prev pointer are stored in the unused memory of free blocks is identical to the reference implementation.
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/blockheader_large.png}
+        \caption{Adapted block header for the general version with a pointer to the previous physical block.}
+        \label{fig:blockheader_large}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.49\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/blockheader_small.png}
+        \caption{Adapted block header for the optimized version without a pointer to the previous physical block.}
+        \label{fig:blockheader_small}
+    \end{subfigure}
+    \caption{Visual representation showing the contents of the block header for the two allocator versions.}
+    \label{fig:blockheader_adaptations}
+\end{figure}
+
+% Ett use-case där vi inte kommer att använda free-anrop eller att vi använder free-anrop men vill inte coalesce:a block. DeferredCoalescing.
+% Bygger vidare på att konstruera allokatorn från livemapen där vi kan jobba i en cykel som består av clear -> free_ranges -> allokera -> repeat
+% eller i fall där vi inte vill ta kostnaden att coalesce:a block direkt utan väljer att avvakta med det och göra en full-sweep senare.
+% Detta tillåtter oss att inte behöva spara prev_phys_block pekaren i block headern, vilket gör att overheaden blir mindre.
+
 
 %%% Local Variables:
 %%% mode: latex

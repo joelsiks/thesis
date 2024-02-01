@@ -3,7 +3,7 @@ Two-Level Segregated Fit (TLSF) is a dynamic storage allocator, first introduced
 
 As the name implies, TLSF is a free-list based allocator that uses segregated-fit, storing multiple free-lists containing blocks of set size classes. To efficiently lookup what free-list contain blocks, TLSF employs two levels of bitmaps, one bitmap for size classes that are separated by powers of two called first-level, and a second-level that sub-divides the first-level size classes linearly. In the reference implementation, the number of first- and second-levels are both limited to 32 in order to fit in 32-bit values. Additionally, the number of second-levels are recommended to be a power of two for efficiency reasons so that simple bit instructions can be used.
 
-This thesis intends to explore adapting TLSF for integration into a garbage collector. The work of the TLSF authors primarily focusses on explicit low-level allocation primitives, with no explicit consideration for garbage collection. Therefore, investigating the incorporation of (an adapted) TLSF into a garbage collector represents a crucial and promising avenue for advancing its development.
+This thesis intends to explore adapting TLSF for integration into a garbage collector. The work of the TLSF authors primarily focusses on explicit low-level allocation primitives, with no explicit consideration for garbage collection. Therefore, investigating how TLSF can be adapted to fit into the context of garbage collection represents a crucial and promising avenue for advancing its development.
 
 %%% Local Variables:
 %%% mode: latex
