@@ -84,13 +84,13 @@ next = get\_next\_block(current)\;
 
 \subsubsection{Block Header Differences}
 
-If the pointer to the previous physical block is no longer needed, we can redesign the header for it to be removed. 
+If the pointer to the previous physical block is no longer needed, we can redesign the header for it to be removed in the optimized version and still kept in the general version.
 
-The default case for the block header is shown for the general version in Figure~\ref{fig:blockheader_large}. Here, the block header consists of the size of the block, the next and prev pointers for free-list linking and a pointer to the previous physical block. This is very similar to the reference implementation, with the change that the next and prev pointers have been moved to right after the size field. The reason for this is that it allows us to share the same header configuration for both the general and specific allocators, but only using some fields in the specific version. The major downside of this, which also deviates from the reference implementation, is that all allocations require a 32 byte header.
+The default case for the block header is shown for the general version in Figure~\ref{fig:blockheader_large}. Here, the block header consists of the size of the block, the next and prev pointers for free-list linking and a pointer to the previous physical block. This is very similar to the reference implementation, with the change that the next and prev pointers have been moved to right after the size field. The reason for this is that it allows us to share the same header implementation for both the general and specific allocators, but only using some fields in the specific version. The major downside of this, which also deviates from the reference implementation, is that all allocations require a 32 byte header.
 
 % TODO: Disadventageous for small allocations, will have to be measured in practice.
 
-Figure~\ref{fig:blockheader_small} shows the fields that are used in the optimized header, where size is used always for both allocated and free blocks. However, the next and prev pointers are only used in free blocks. This enables us to reduce the constant block header overhead to 8 bytes for all allocations, but requiring and minimum of 16 bytes to be allocated from the user so that the next and prev pointer can be stored for free blocks. The way that the next and prev pointer are stored in the unused memory of free blocks is identical to the reference implementation.
+Figure~\ref{fig:blockheader_small} shows the fields that are used in the optimized header, where size is used always for both allocated and free blocks. However, the next and prev pointers are only used in free blocks. This enables us to reduce the constant block header overhead to 8 bytes for all allocations, but requiring and minimum of 16 bytes to be allocated from the user so that the next and prev pointer can be stored inside the unused portion of free blocks. The way that the next and prev pointer are stored in the unused memory of free blocks is identical to the reference implementation.
 
 \begin{figure}[H]
     \centering
@@ -110,12 +110,6 @@ Figure~\ref{fig:blockheader_small} shows the fields that are used in the optimiz
     \caption{Visual representation showing the contents of the block header for the two allocator versions.}
     \label{fig:blockheader_adaptations}
 \end{figure}
-
-% Ett use-case där vi inte kommer att använda free-anrop eller att vi använder free-anrop men vill inte coalesce:a block. DeferredCoalescing.
-% Bygger vidare på att konstruera allokatorn från livemapen där vi kan jobba i en cykel som består av clear -> free_ranges -> allokera -> repeat
-% eller i fall där vi inte vill ta kostnaden att coalesce:a block direkt utan väljer att avvakta med det och göra en full-sweep senare.
-% Detta tillåtter oss att inte behöva spara prev_phys_block pekaren i block headern, vilket gör att overheaden blir mindre.
-
 
 %%% Local Variables:
 %%% mode: latex
