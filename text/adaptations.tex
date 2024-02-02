@@ -1,5 +1,4 @@
 
-% Generalized and specific.
 In this section we describe the adaptations that have been made to the reference implementation in order to make the allocator more suited toward being used in ZGC.
 
 \subsection{General and Optimized Allocator}
@@ -12,9 +11,9 @@ However, making optimizations might require changes that also changes the genera
 
 Since small and medium pages only allow the user to allocate in certain size ranges, we can use this to our advantage to store metadata about the allocator in a more efficient way. Small pages allow sizes in the range [16B, 256KB] and medium pages (256KB, 4MB]. We note that the allowed sizes in the medium range is a factor of 16KB larger than the small range. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16KB for medium pages.
 
-With the now limited allocation size range for small pages in mind, we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the small page range, with a lower-bound of $2^4 =$ 16B and an upper-bound of $2^{17} =$ 128KB. It would be preferable to be able to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions. To stay inside the 64-bit limit we must choose the number of second-levels accordingly. For efficiency reasons, the number of second levels should be a power of two~\cite{tlsf}, and the only value this leaves us is 4, which requires $14 * 4 =$ 56 bits.
+With the now limited allocation size range for small pages in mind, we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the small page range, with a lower-bound of $2^4 =$ 16B and an upper-bound of $2^{17} =$ 128KB. It is desirable to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions. To stay inside the 64-bit limit we must choose the number of second-levels accordingly. For efficiency reasons again, the number of second levels should be a power of two~\cite{TLSF}, and the only value this leaves us is 4, which requires $14 * 4 =$ 56 bits.
 
-Combining the insight of the number of required first-levels, desire to use a single 64-bit bitmap and the number of second-levels, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the first-level bitmap entirely since the new bitmap can be indexed directly using the formula: $I = FL * 4 + SL$, where $FL$ is the first-level index and $SL$ the second-level index. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
+Combining the insight of the number of required first-levels, desire to use a single 64-bit bitmap and the number of second-levels, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the first-level bitmap entirely, since the new bitmap can be indexed directly using the formula: $I = FL * 4 + SL$, where $FL$ is the first-level index and $SL$ the second-level index. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
 
 \begin{figure}[H]
     \centering
@@ -23,7 +22,7 @@ Combining the insight of the number of required first-levels, desire to use a si
     \label{fig:bitmap_flattening}
 \end{figure}
 
-The relationship between the bitmap and the free-lists is illustrated in Figure~\ref{fig:bitmap_relationship}, closely adhering to the original TLSF design. However, the adaptation now figures out what free-list to look at from the new 64-bit bitmap.
+The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, the adaptation now efficiently determines the relevant free-list by looking in the single bitmap, not two bitmaps as in the original design.
 
 \begin{figure}[H]
     \centering
@@ -41,11 +40,9 @@ The relationship between the bitmap and the free-lists is illustrated in Figure~
 
 \subsection{Constructing From Livemap Data}
 
-Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the 'holes' of a page. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer object allocation.
+Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the ``holes'' of a page. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer object allocation.
 
-Most allocators start with an unused chunk of memory, allowing them to track all updates that are made so that it always has an up-to-date representation of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need to update the allocator's internal representation to align with the contents of the memory.
-
-The data that represents what the underlying memory contains is the livemap-data that is stored in pages in ZGC. The livemap contain, at set times, the latest information about what the memory contain and can thus be used to update the allocator's representation. The most important aspect to note about the livemap is that it contains the latest information, which allows for batch updates to be made, which can be taken into consideration when designing the API around re-constructing the internal representation.
+Most allocators start with an unused chunk of memory, allowing them to track and keep an up-to-date record of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need to update the allocator's internal representation to align with the contents of the memory. In ZGC, the latest live analysis of a page contains an accurate representation of what objects are alive in the page's underlying memory. This information can therefore be used to update the allocator's internal representation after a transition to using an allocator.
 
 The construction of the allocator's representation involves a two-step process that extends the allocator's API. Initially, the representation must be cleared so that any previous data that might be inaccurate is not present. Additionally, when clearing, a block is allocated to cover the entirety of the underlying memory. Subsequently, the user invokes a function to free blocks within specified ranges, allowing to selectively ``carve'' segments free memory from the initially allocated block. When freeing ranges of blocks, we only consider four cases: 
 

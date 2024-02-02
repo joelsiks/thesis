@@ -19,7 +19,7 @@ cycle:
 	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
 
 clean:
-	rm -f *.aux *.lof *.log *.lot *.synctex.gz *.toc
+	rm -rf *.aux *.lof *.log *.lot *.synctex.gz *.toc svg-inkscape
 	find . -type f -name '*.pdf' ! -name 'logo_name.pdf' ! -name 'logo_name_sv.pdf' -exec rm -f {} \;
 
 diff.tex:
