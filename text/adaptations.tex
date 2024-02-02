@@ -2,11 +2,11 @@
 % Generalized and specific.
 In this section we describe the adaptations that have been made to the reference implementation in order to make the allocator more suited toward being used in ZGC.
 
-\subsection{General and Specific Allocator}
+\subsection{General and Optimized Allocator}
 
-The first and most important adaptation is re-implementing the reference implementation in a configurable manner to allow for the allocator to be extended while still maintaining a general version of it. The reason behind this is to allow using the allocator in an all-purpose manner while also having an optimized, or altered, version for a more specific purpose. Having both a general and specific version also allows for measuring the efficacy of any adaptation in the specific implementation to the general one.
+The first and most important adaptation is re-implementing the reference implementation in a configurable manner to allow for the allocator to be extended while still maintaining a general version of it. The reason behind this is to allow using the allocator in an all-purpose manner while also having an optimized, or altered, version for a more specific purpose. Having both a general and optimized version also allows for measuring the efficacy of any adaptation in the optimizedd implementation to the general one.
 
-However, making optimizations might require changes that also changes the general version in a way that does not with a reference implementation. Such trade-offs, which will be discussed in more detail later in this section, could be reasonable when supporting multiple versions of the allocator.
+However, making optimizations might require changes that also changes the general version in such a way that it deviates from the reference implementation. Such trade-offs, which will be discussed in more detail later in this section, could be reasonable when supporting multiple versions of the allocator.
 
 \subsection{Allocation Size for Small and Medium Pages}
 
@@ -47,7 +47,7 @@ Most allocators start with an unused chunk of memory, allowing them to track all
 
 The data that represents what the underlying memory contains is the livemap-data that is stored in pages in ZGC. The livemap contain, at set times, the latest information about what the memory contain and can thus be used to update the allocator's representation. The most important aspect to note about the livemap is that it contains the latest information, which allows for batch updates to be made, which can be taken into consideration when designing the API around re-constructing the internal representation.
 
-The construction of the allocator's representation involves a two-step process that extends the allocator's API. Initially, the representation must be cleared so that any previous data that might be inaccurate is not present. Additionally, when clearing, a block is allocated to cover the entirety of the underlying memory. Subsequently, the user invokes a function to free blocks within specified ranges, allowing to selectively ``carve'' segments free memory from the initially allocated block. When freeing ranges of blocks, we only consider three cases: 
+The construction of the allocator's representation involves a two-step process that extends the allocator's API. Initially, the representation must be cleared so that any previous data that might be inaccurate is not present. Additionally, when clearing, a block is allocated to cover the entirety of the underlying memory. Subsequently, the user invokes a function to free blocks within specified ranges, allowing to selectively ``carve'' segments free memory from the initially allocated block. When freeing ranges of blocks, we only consider four cases: 
 
 \begin{enumerate}
     \item The range is strictly within an allocated block and does not start nor end on the block's edges.
@@ -56,7 +56,7 @@ The construction of the allocator's representation involves a two-step process t
     \item The range starts at the block's start and ends inside the block.
 \end{enumerate}
 
-We will not consider cases where the range overlaps multiple blocks and start or end on the edge of a block that is not the last or the first block in the physical order. This is because if a user wants to free a consecutive range of 64 bytes for example, they should always free the entire 64 byte range directly and not the first 32 bytes followed by the next 32 bytes. This is done to reduce the complexity of the implementation without affecting functionality for the user significantly.
+We will not consider cases where the range overlaps multiple blocks and start or end on the edge of a block that is not the last or the first block in the physical order. This is because if a user wants to free a consecutive range of 64 bytes for example, they should always free the entire 64 byte range directly and not the first 32 bytes followed by the next 32 bytes. This reduces complexity of the implementation without significantly impacting user functionality.
 
 \subsection{Deferred Coalescing of Blocks}
 
@@ -86,7 +86,7 @@ next = get\_next\_block(current)\;
 
 If the pointer to the previous physical block is no longer needed, we can redesign the header for it to be removed in the optimized version and still kept in the general version.
 
-The default case for the block header is shown for the general version in Figure~\ref{fig:blockheader_large}. Here, the block header consists of the size of the block, the next and prev pointers for free-list linking and a pointer to the previous physical block. This is very similar to the reference implementation, with the change that the next and prev pointers have been moved to right after the size field. The reason for this is that it allows us to share the same header implementation for both the general and specific allocators, but only using some fields in the specific version. The major downside of this, which also deviates from the reference implementation, is that all allocations require a 32 byte header.
+The default configuration of the block header is illustrated in Figure~\ref{fig:blockheader_large} for the general version. In this setup, the block header includes the block size, next and previous pointers for free-list linking, and a pointer to the previous physical block. This closely resembles the reference implementation, except for the repositioning of the next and prev pointers immediately after the size field. This adjustment allows us to use the same header implementation for both the general and optimized allocators, utilizing only certain fields in the optimized version. However, this approach introduces a notable deviation from the reference implementation. In this new design, every allocation requires a 32-byte header since information about free blocks cannot be stored in the unused portions of free blocks. Since we do not need to store any data in the unused parts of free blocks, the minimum allocation size can be arbitrarily set.
 
 % TODO: Disadventageous for small allocations, will have to be measured in practice.
 
