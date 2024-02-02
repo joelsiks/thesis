@@ -7,16 +7,16 @@ open: cycle
 	open $(ENTRYPOINT).pdf
 
 main:
-	pdflatex --synctex=1 $(ENTRYPOINT)
+	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
 
 bib:
 	bibtex $(ENTRYPOINT)
 
 cycle:
-	pdflatex --synctex=1 $(ENTRYPOINT)
+	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
 	bibtex $(ENTRYPOINT)
-	pdflatex --synctex=1 $(ENTRYPOINT)
-	pdflatex --synctex=1 $(ENTRYPOINT)
+	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
+	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
 
 clean:
 	rm -f *.aux *.lof *.log *.lot *.synctex.gz *.toc
@@ -31,4 +31,4 @@ diff.tex:
 	latexdiff prev.tex $(ENTRYPOINT).tex > diff.tex
 
 diff: diff.tex
-	pdflatex --synctex=1 diff.tex
+	pdflatex --shell-escape --synctex=1 diff.tex

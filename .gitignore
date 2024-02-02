@@ -1,4 +1,6 @@
 
+*.fls
+*.fdb_latexmk
 *.aux
 *.bbl
 _region_.tex
@@ -14,3 +16,7 @@ _region_.tex
 *.ilg
 *.ind
 *.pdf
+.vscode/
+svg-inkscape/
+*.fdb_latexmk
+*.fls

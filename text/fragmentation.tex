@@ -1,5 +1,4 @@
-
-As mentioned above, we classify fragmentation as being either internal or external. Internal fragmentation is considered wasted space due to alignment and it may sometimes be required for an allocator to allocate a slightly smaller block of memory than a user has requested. Figure~\ref{fig:internal_fragmentation} shows an example of when a user has requested 100 bytes, where the allocator has allocated 128 bytes instead due to alignment. In this case, the last 28 bytes are wasted space since the user will not use them.
+As mentioned above, we classify fragmentation as being either internal or external. Internal fragmentation is considered wasted space due to alignment, and it may sometimes be required for an allocator to allocate a slightly smaller block of memory than a user has requested. Figure~\ref{fig:internal_fragmentation} shows an example of when a user has requested 100 bytes, where the allocator has allocated 128 bytes instead due to alignment. In this case, the last 28 bytes are wasted space since the user will not use them.
 
 \begin{figure}[H]
     \centering
@@ -17,7 +16,7 @@ External fragmentation occurs when there is enough memory available in total but
     \label{fig:external_fragmentation}
 \end{figure}
 
-Managing and reducing fragmentation is crucial in optimising memory usage for long-running programs, as excessive fragmentation can impede the system's ability to efficiently allocate contiguous blocks of memory for new objects.
+Managing and reducing fragmentation is crucial in optimizing memory usage for long-running programs, as excessive fragmentation can impede the system's ability to efficiently allocate contiguous blocks of memory for new objects.
 
 %%% Local Variables:
 %%% mode: latex
