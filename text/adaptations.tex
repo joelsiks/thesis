@@ -15,6 +15,8 @@ With the now limited allocation size range for small pages in mind, we are able 
 
 Combining the insight of the number of required first-levels, desire to use a single 64-bit bitmap and the number of second-levels, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the first-level bitmap entirely, since the new bitmap can be indexed directly using the formula: $I = FL * 4 + SL$, where $FL$ is the first-level index and $SL$ the second-level index. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
 
+Since a page is initially 2MB large, the initial block will be significantly larger than the maximum allocation size of 256KB. This means we either need to split it up into multiple blocks of smaller sizes or store it in a different free-list. To solve this we will add a last free-list that is called the "large-list", represented by the 57th bit in the bitmap. The large-list will store blocks that are abov ethe largest index to supprt storing blocks that are initially very large.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{figures/bitmap_flattening.png}
@@ -40,9 +42,9 @@ The correlation between the bitmap and the free-lists is depicted in Figure~\ref
 
 \subsection{Constructing From Livemap Data}
 
-Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the ``holes'' of a page. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer object allocation.
+Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the ``holes'' of a page. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer allocation.
 
-Most allocators start with an unused chunk of memory, allowing them to track and keep an up-to-date record of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need to update the allocator's internal representation to align with the contents of the memory. In ZGC, the latest live analysis of a page contains an accurate representation of what objects are alive in the page's underlying memory. This information can therefore be used to update the allocator's internal representation after a transition to using an allocator.
+Most allocators start with an unused chunk of memory, allowing them to track and keep an up-to-date record of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need to update the allocator's internal representation to align with the contents of the memory. In ZGC, the latest live analysis of a page contains an accurate representation of what data is alive in the page's underlying memory. This information can therefore be used to update the allocator's internal representation after a transition to using an allocator.
 
 The construction of the allocator's representation involves a two-step process that extends the allocator's API. Initially, the representation must be cleared so that any previous data that might be inaccurate is not present. Additionally, when clearing, a block is allocated to cover the entirety of the underlying memory. Subsequently, the user invokes a function to free blocks within specified ranges, allowing to selectively ``carve'' segments free memory from the initially allocated block. When freeing ranges of blocks, we only consider four cases: 
 
@@ -76,18 +78,18 @@ next = get\_next\_block(current)\;
 }
 }
 \label{algorithm:coalesce_blocks}
-\caption{The algorithm for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list so that the newly coalesced block can be inserted.}
+\caption{Algorithm for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list before the newly coalesced block is inserted.}
 \end{algorithm}
 
 \subsubsection{Block Header Differences}
 
 If the pointer to the previous physical block is no longer needed, we can redesign the header for it to be removed in the optimized version and still kept in the general version.
 
-The default configuration of the block header is illustrated in Figure~\ref{fig:blockheader_large} for the general version. In this setup, the block header includes the block size, next and previous pointers for free-list linking, and a pointer to the previous physical block. This closely resembles the reference implementation, except for the repositioning of the next and prev pointers immediately after the size field. This adjustment allows us to use the same header implementation for both the general and optimized allocators, utilizing only certain fields in the optimized version. However, this approach introduces a notable deviation from the reference implementation. In this new design, every allocation requires a 32-byte header since information about free blocks cannot be stored in the unused portions of free blocks. Since we do not need to store any data in the unused parts of free blocks, the minimum allocation size can be arbitrarily set.
+The default configuration of the block header is illustrated in Figure~\ref{fig:blockheader_large} for the general version. In this new configuration, the block header includes the block size, next and previous pointers for free-list linking, and a pointer to the previous physical block. This closely resembles the reference implementation, except for the repositioning of the next and prev pointers immediately after the size field. This adjustment allows us to use the same header implementation for both the general and optimized allocators, utilizing only certain fields in the optimized version. However, this approach introduces a notable deviation from the reference implementation that adds a slightly larger overhead to all allocations in the general version. Now, every allocation requires a 32-byte header since information about free blocks cannot be stored in the unused portions of free blocks. Since we do not need to store any data in the unused parts of free blocks, the minimum allocation size can be arbitrarily set.
 
 % TODO: Disadventageous for small allocations, will have to be measured in practice.
 
-Figure~\ref{fig:blockheader_small} shows the fields that are used in the optimized header, where size is used always for both allocated and free blocks. However, the next and prev pointers are only used in free blocks. This enables us to reduce the constant block header overhead to 8 bytes for all allocations, but requiring and minimum of 16 bytes to be allocated from the user so that the next and prev pointer can be stored inside the unused portion of free blocks. The way that the next and prev pointer are stored in the unused memory of free blocks is identical to the reference implementation.
+Figure~\ref{fig:blockheader_small} shows the fields that are used in the optimized header, where size is used always for both allocated and free blocks. However, the next and prev pointers are only used in free blocks. This enables us to reduce the constant block header overhead to 8 bytes for all allocations, but requiring and minimum of 16 bytes to be allocated from the user so that the next and prev pointer can be stored inside the unused portion of free blocks, which aligns well with the minimum allocation size of 16 bytes for small pages in ZGC. The way that the next and prev pointer are stored in the unused memory of free blocks is identical to the reference implementation.
 
 \begin{figure}[H]
     \centering
