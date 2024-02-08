@@ -3,7 +3,7 @@ In this section we describe the adaptations that have been made to the reference
 
 \subsection{General and Optimized Allocator}
 
-The first and most important adaptation is re-implementing the reference implementation in a configurable manner to allow for the allocator to be extended while still maintaining a general version of it. The reason behind this is to allow using the allocator in an all-purpose manner while also having an optimized, or altered, version for a more specific purpose. Having both a general and optimized version also allows for measuring the efficacy of any adaptation in the optimizedd implementation to the general one.
+The first and most important adaptation is re-implementing the reference implementation in a configurable manner to allow for the allocator to be extended while still maintaining a general version of it. The reason behind this is to allow using the allocator in an all-purpose manner while also having an optimized, or altered, version for a more specific purpose. Having both a general and optimized version also allows for measuring the efficacy of any adaptation in the optimized implementation to the general one.
 
 However, making optimizations might require changes that also changes the general version in such a way that it deviates from the reference implementation. Such trade-offs, which will be discussed in more detail later in this section, could be reasonable when supporting multiple versions of the allocator.
 
@@ -15,12 +15,12 @@ With the now limited allocation size range for small pages in mind, we are able 
 
 Combining the insight of the number of required first-levels, desire to use a single 64-bit bitmap and the number of second-levels, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the first-level bitmap entirely, since the new bitmap can be indexed directly using the formula: $I = FL * 4 + SL$, where $FL$ is the first-level index and $SL$ the second-level index. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
 
-Since a page is initially 2MB large, the initial block will be significantly larger than the maximum allocation size of 256KB. This means we either need to split it up into multiple blocks of smaller sizes or store it in a different free-list. To solve this we will add a last free-list that is called the "large-list", represented by the 57th bit in the bitmap. The large-list will store blocks that are abov ethe largest index to supprt storing blocks that are initially very large.
+Since a page is initially 2MB large, the initial block will be significantly larger than the maximum allocation size of 256KB. This means we either need to split it up into multiple blocks of smaller sizes or store it in a different free-list. To solve this we will add a last free-list that is called the "large-list", represented by the 57th bit in the bitmap. The large-list will store blocks that are above the largest index to support storing blocks that are initially very large.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{figures/bitmap_flattening.png}
-    \caption{Flattening of the 2D-matrix reprsentation of TLSF bitmaps into a single 64-bit value. The first-level bitmap is disregarded in favor of indexing the new flattened bitmap using the first-level value instead. The number of first-levels are 14, indicated by bits of the same color belonging to the same first-level. The number of second-levels are 4, as indicated by the same number of colored bits.}
+    \caption{Flattening of the 2D-matrix representation of TLSF bitmaps into a single 64-bit value. The first-level bitmap is disregarded in favor of indexing the new flattened bitmap using the first-level value instead. The number of first-levels are 14, indicated by bits of the same color belonging to the same first-level. The number of second-levels are 4, as indicated by the same number of colored bits.}
     \label{fig:bitmap_flattening}
 \end{figure}
 
@@ -59,9 +59,9 @@ We will not consider cases where the range overlaps multiple blocks and start or
 
 \subsection{Deferred Coalescing of Blocks}
 
-In the process of allocating and freeing blocks within an allocator, the general preference is to always have as large blocks as possible available to fulfill larger requests. However, in scenarios where numerous small allocations are frequently made and free'd, the emphasis on coalescing blocks to accommodate larger requests in the future may not be worthwhile. Instead, a strategy we call Deferred Coalescing (DC) can be employed.
+In the process of allocating and freeing blocks within an allocator, the general preference is to always have as large blocks as possible available to fulfill larger requests. However, in scenarios where numerous small allocations are frequently made and free'd, the emphasis on coalescing blocks to accommodate larger requests in the future may not be worthwhile. Instead, a strategy we call deferred coalescing can be employed.
 
-The idea behind DC is that when the user calls free(), the block being freed is not implicitly attempted to be coalesced with its adjacent physical neighbors. Instead, the allocator's API is extended to include an explicit coalesce operation. This operation scans through all blocks and coalesces as many as possible. Unlike immediate coalescing, this deferred approach postpones the process until a later point when a larger block is required.
+The idea behind deferred coalescing is that when the user calls free(), the block being freed is not implicitly attempted to be coalesced with its adjacent physical neighbors. Instead, the allocator's API is extended to include an explicit coalesce operation. This operation scans through all blocks and coalesces as many as possible. Unlike immediate coalescing, this deferred approach postpones the process until a later point when a larger block is required.
 
 The explicit coalesce operation conducts a pass over all blocks, requiring only knowledge of the size of the current block to identify the location of the next block. This eliminates the need to store a pointer to the physical neighbor right before the current block, which is only used when coalescing in a free() call. The algorithm describing how the pass is done is shown in Algorithm~\ref{algorithm:coalesce_blocks}.
 
@@ -81,34 +81,43 @@ next = get\_next\_block(current)\;
 \caption{Algorithm for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list before the newly coalesced block is inserted.}
 \end{algorithm}
 
-\subsubsection{Block Header Differences}
+\subsubsection{Block Header Adjustments}
 
-If the pointer to the previous physical block is no longer needed, we can redesign the header for it to be removed in the optimized version and still kept in the general version.
-
-The default configuration of the block header is illustrated in Figure~\ref{fig:blockheader_large} for the general version. In this new configuration, the block header includes the block size, next and previous pointers for free-list linking, and a pointer to the previous physical block. This closely resembles the reference implementation, except for the repositioning of the next and prev pointers immediately after the size field. This adjustment allows us to use the same header implementation for both the general and optimized allocators, utilizing only certain fields in the optimized version. However, this approach introduces a notable deviation from the reference implementation that adds a slightly larger overhead to all allocations in the general version. Now, every allocation requires a 32-byte header since information about free blocks cannot be stored in the unused portions of free blocks. Since we do not need to store any data in the unused parts of free blocks, the minimum allocation size can be arbitrarily set.
+Being able to construct the allocator from livemap data moves the emphasis on calling the traditional free() method of the allocator to calling free\_range() instead. However, in cases when calling free() is still desirable, it is beneficial from a performance standpoint to not coalesce blocks immediately. Combining both of these insights, we can observe that storing a pointer to the previous physical block is no longer needed. This is becuase the previous physical pointer is only used when calling free and coalescing blocks with their physical neighbors. Following this, we will redesign the header for it to be removed in the optimized version and still kept in the general version. Furthermore, R. Jones et al~\cite[Page 103]{gchandbook} discuss that removing parts of the block header from an allocator in the context of garbage collection is a reasonable optimization approach.
 
 % TODO: Disadventageous for small allocations, will have to be measured in practice.
 
-Figure~\ref{fig:blockheader_small} shows the fields that are used in the optimized header, where size is used always for both allocated and free blocks. However, the next and prev pointers are only used in free blocks. This enables us to reduce the constant block header overhead to 8 bytes for all allocations, but requiring and minimum of 16 bytes to be allocated from the user so that the next and prev pointer can be stored inside the unused portion of free blocks, which aligns well with the minimum allocation size of 16 bytes for small pages in ZGC. The way that the next and prev pointer are stored in the unused memory of free blocks is identical to the reference implementation.
+The block header, as implemented in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the next and prev pointers are stored in the unused parts of free blocks and are unused in allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer allows us to get the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}. In the optimized header, the only constant overhead is the size field, as the next and prev pointers are only used in the unused parts of free blocks, as in the reference implementation. Additionally, the previous physical pointer is completely ignored in the optimized header.
 
 \begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{0.49\textwidth}
+    \begin{subfigure}[b]{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_large.png}
-        \caption{Adapted block header for the general version with a pointer to the previous physical block.}
-        \label{fig:blockheader_large}
-    \end{subfigure}
+        \includegraphics[width=\textwidth]{figures/blockheader_adap_reference.png}
+        \caption{Reference implementation block header.}
+        \label{fig:blockheader_adap_reference}
+    \end{subfigure}%
     \hfill
-    \begin{subfigure}[b]{0.49\textwidth}
+    \begin{subfigure}[b]{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_small.png}
-        \caption{Adapted block header for the optimized version without a pointer to the previous physical block.}
-        \label{fig:blockheader_small}
+        \includegraphics[width=\textwidth]{figures/blockheader_adap_general.png}
+        \caption{Adapted general block header.}
+        \label{fig:blockheader_adap_general}
+    \end{subfigure}%
+    \hfill
+    \begin{subfigure}[b]{0.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{figures/blockheader_adap_optimized.png}
+        \caption{Adapted optimized block header.}
+        \label{fig:blockheader_adap_optimized}
     \end{subfigure}
-    \caption{Visual representation showing the contents of the block header for the two allocator versions.}
+    \caption{Overview of block header contents and adaptations. Dashed fields are only unused in the unused part of free blocks and crossed out fields are unused.}
     \label{fig:blockheader_adaptations}
 \end{figure}
+
+The goal of changing the header is to reduce the constant block header overhead required when allocating blocks. This is especially important when allocating mainly small objects, where the block overhead is impactful. With the new design for the block header, the constant block header overhead for the optimized version is reduced to only 8 bytes for storing the size of the block. However, reducing the overhead for optimized headers has required us to instead increase the overhead for the general version.
+
+% Block sizes can be stored in much less than 64 bits, but due to alignment etc it is reasonable to use a 64-bit value to store the size anyways.
 
 %%% Local Variables:
 %%% mode: latex

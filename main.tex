@@ -20,8 +20,8 @@
 
 \usepackage{caption}
 \usepackage{subcaption}
+\usepackage{graphicx}
 \usepackage{svg}
-\usepackage{subcaption}
 \usepackage{mwe}
 
 % För att göra ett index behövs
@@ -136,6 +136,10 @@ Juni 2024
 \label{sec:memory_allocation}
 \input{text/memory_allocation}
 
+\subsection{Two-Level Segregated Fit}
+\label{sec:tlsf}
+\input{text/tlsf}
+
 \subsection{HotSpot JVM}
 \label{sec:hotspot}
 \input{text/Hotspot}
@@ -143,10 +147,6 @@ Juni 2024
 \subsection{Garbage Collection}
 \label{sec:gc}
 \input{text/GC}
-
-\subsection{Two-Level Segregated Fit}
-\label{sec:tlsf}
-\input{text/tlsf}
 
 \subsection{ZGC}
 \label{sec:zgc}
@@ -159,7 +159,8 @@ Juni 2024
 \section{Related work}
 \input{text/related-work}
 
-\section{Allocator Adaptations}
+\newpage
+\section{Adapting TLSF for ZGC Page Allocation}
 \label{sec:adaptations}
 \input{text/adaptations}
 
