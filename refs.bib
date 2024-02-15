@@ -8,6 +8,23 @@
     doi={10.1109/EMRTS.2004.1311009}
 }
 
+@article{zgc_deep_dive,
+    author = {Yang, Albert Mingkun and Wrigstad, Tobias},
+    title = {Deep Dive into ZGC: A Modern Garbage Collector in OpenJDK},
+    year = {2022},
+    issue_date = {December 2022},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {44},
+    number = {4},
+    issn = {0164-0925},
+    url = {https://doi.org/10.1145/3538532},
+    doi = {10.1145/3538532},
+    abstract = {ZGC is a modern, non-generational, region-based, mostly concurrent, parallel, mark-evacuate collector recently added to OpenJDK. It aims at having GC pauses that do not grow as the heap size increases, offering low latency even with large heap sizes. The ZGC C++ source code is readily accessible in the OpenJDK repository, but reading it (25 KLOC) can be very intimidating, and one might easily get lost in low-level implementation details, obscuring the key concepts. To make the ZGC algorithm more approachable, this work provides a thorough description on a high-level, focusing on the overall design with moderate implementation details. To explain the concurrency aspects, we provide a SPIN model that allows studying races between mutators and GC threads, and how they are resolved in ZGC. Such a model is not only useful for learning the current design (offering a deterministic and interactive experience) but also beneficial for prototyping new ideas and extensions. Our hope is that our detailed description and the SPIN model will enable the use of ZGC as a building block for future GC research, and research ideas implemented on top of it could even be adopted in the industry more readily, bridging the gap between academia and industry in the context of GC research.},
+    journal = {ACM Trans. Program. Lang. Syst.},
+    month = {sep},
+}
+
 @inproceedings{zpage_size_table,
     author = {Yang, Albert Mingkun and \"{O}sterlund, Erik and Wrigstad, Tobias},
     title = {Improving program locality in the GC using hotness},
