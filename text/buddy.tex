@@ -1,0 +1,67 @@
+The concept of a buddy memory allocator was first introduced by K.C. Knowlton~\cite{buddyog}. The core idea of the buddy system involves dividing memory into blocks and pairing them as ``buddies''. These buddy pairs are then utilized when allocating and deallocating memory of different sizes. The simple design of the buddy system makes it attractive for various applications. Two examples are: the Linux kernel, which employs a modified binary buddy system for allocating physical memory~\cite{linuxbuddy}, and \texttt{jemalloc} which utilizes a buddy system as one of its allocation strategies \cite{jemalloc}.
+
+\subsection{Allocation and Deallocation}
+The binary buddy allocator is the original and most basic type of buddy allocator. It partitions memory into blocks with sizes that are powers of 2. A free list of available blocks of different sizes is maintained to keep track of the free blocks. Initially, all memory is one large block. Figure~\ref{fig:buddystart} shows the initial state of a binary buddy allocator with a total memory of 128 bytes. It can be seen that the entire memory is contained within a single block, which is also included in the free list.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.0\textwidth]{figures/bbuddy_initial.svg}
+    \caption{The initial state of the free-list and memory in a binary buddy allocator.}
+    \label{fig:buddystart}
+\end{figure}
+
+When requesting memory, a block of the smallest size that can accommodate the requested memory will be returned. If there are no blocks of that size available, larger blocks will be recursively split in two until a block of the correct size is available. The split blocks are then added to the free list for future allocations. Figure~\ref{fig:buddysplit} shows the resulting state of the previous figure after allocating a block of size 16. It can be seen that the initial 128-byte block has been split multiple times to fulfill the request, with the leftmost block being returned and the addition of various block sizes to the free list.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.0\textwidth]{figures/bbuddy_allocated.svg}
+    \caption{The state of the free-list and memory in a binary buddy allocator after one 16-byte allocation.}
+    \label{fig:buddysplit}
+\end{figure}
+
+Deallocation is the reverse process of allocation. When a block is deallocated, it is merged with its buddy if the buddy is also deallocated. This merge creates a new, larger block. The original block and its buddy are then removed from the free list, and the new, larger block is inserted. Afterward, the larger block checks the status of its buddy and the merging process continues recursively until merging is no longer possible. To demonstrate this process, consider the situation where the 16-byte block from Figure~\ref{fig:buddysplit} is deallocated. In this scenario, the block would go through a recursive merging process with its buddies until it reaches the initial state shown in Figure~\ref{fig:buddystart}.
+
+\subsection{Determining Buddy State}
+When deallocating a block, the allocator must determine the state of its corresponding buddy. This is done by using a bitmap, with each entry indicating if a block has been allocated or not. The allocator is capable of assigning a unique number to each block that can potentially be allocated. Figure~\ref{fig:buddyorder} provides an illustration of all possible blocks and their respective numbering. The bitmap requires a total of $2^n - 1$ entries, where $n$ is the number of levels of potential block sizes.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.85\textwidth]{figures/bbuddy_order.svg}
+    \caption{Unique numbering of each possible block in a binary buddy allocator.}
+    \label{fig:buddyorder}
+\end{figure}
+
+The bitmap correlates with the available blocks in the free-list, and is modified both when splitting and merging blocks. Figure~\ref{fig:buddybmap} shows the initial state of the bitmap when a binary buddy allocator is created. We can see that only the single largest block is marked as free, with all other blocks not being available. Figure~\ref{fig:buddybmapallocated} shows the state of the bitmap after the same previous 16-byte allocation. We can now see that the buddies of the split blocks are marked as available and that the large block has been removed.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.0\textwidth]{figures/bbuddy_bmap_initial.svg}
+    \caption{Initial state of the bitmap and free-list of a binary buddy allocator.}
+    \label{fig:buddybmap}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.0\textwidth]{figures/bbuddy_bmap_allocated.svg}
+    \caption{The state of the bitmap and free-list of a binary buddy allocator after one 16-byte allocation.}
+    \label{fig:buddybmapallocated}
+\end{figure}
+
+\subsection{Finding Buddies}
+When deallocating, the allocation must determine the correct block to deallocate given the memory address. A particular address can, however, come from any block level. The simplest solution is to require the user to provide additional information about the allocated size and then use that to calculate from which level to deallocate from. This is very fast and, if possible for the user, leads to the lowest overhead.
+
+Another solution is to store the level of each allocation, either in the block or outside it in a separate data structure. This is not very memory efficient, but is simple and lookup is fast. When the data is stored within a block, the usable space becomes smaller and of an inconvenient size. If the data is stored separately, each possible block location can instead be stored, resulting in a slightly larger but constant overhead.
+
+A third way is to use a bitmap to track which blocks have been split. With this information, it is possible to deduce the size of a block at a particular address. This is very memory efficient, but more operations are needed to find the correct blocks. Figure~\ref{fig:buddybmapsplit} shows how this bitmap looks after the same previous 16-byte block allocation. We can see that all blocks above that block have been marked as split. We can also see that the smallest blocks do not require an entry in the bitmap, as they cannot be split. When a block is deallocated, the allocator will start at the top of the bitmap, then traverse down until the block is no longer marked as split.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=1.0\textwidth]{figures/bbuddy_bmap_split.svg}
+    \caption{The state of the split blocks-bitmap and free-list of a binary buddy allocator after one 16-byte allocation.}
+    \label{fig:buddybmapsplit}
+\end{figure}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: "main"
+%%% End:

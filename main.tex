@@ -22,6 +22,7 @@
 \usepackage{subcaption}
 \usepackage{graphicx}
 \usepackage{svg}
+\usepackage{caption}
 \usepackage{mwe}
 
 % För att göra ett index behövs
@@ -55,7 +56,7 @@
 % Set author names, separated by "\\ " (don't forget the space, or use newline)
 % List authors alphabetically by LAST NAME (unless someone did significantly more/less, which should not be the case)
 % For drafts, include your email addresses to make it easier to send peer reviews
-\author{Joel Sikström}
+\author{Casper Norrbin}
 
 % Visa datum på svenska på förstasidan, även om ni skriver på engelska!
 \date{\begin{otherlanguage}{swedish}  %\foreignlanguage doesn't seem to affect \today?
@@ -148,11 +149,11 @@ Juni 2024
 \label{sec:gc}
 \input{text/GC}
 
-\subsection{ZGC}
+\subsection{The Z Garbage Collector}
 \label{sec:zgc}
 \input{text/zgc}
 
-\subsubsection{Z-Pages}
+\subsubsection{Pages}
 \label{sec:zpage}
 \input{text/zpage}
 
@@ -161,6 +162,16 @@ Juni 2024
 
 \newpage
 \section{Adaptations of the TLSF Memory Allocator}
+\label{sec:adaptations}
+\input{text/adaptations}
+
+\newpage
+\section{Binary Buddy Allocator}
+\label{sec:buddy}
+\input{text/buddy}
+
+\newpage
+\section{Allocator Adaptations}
 \label{sec:adaptations}
 \input{text/adaptations}
 
