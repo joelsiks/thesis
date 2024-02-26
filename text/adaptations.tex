@@ -1,47 +1,23 @@
-In this section we describe the adaptations that have been made to the reference implementation of TLSF to make it more suited toward being used in the context of a garbage collector, specifically ZGC.
+In this section we describe adaptations of the reference implementation of the TLSF allocator to make it more suited toward being used in the context of a garbage collector, specifically ZGC. The implementations of the adaptations described here and their impact are explained and discussed in Section~\ref{sec:adaptations-impl}.
 
 \subsection{Architectural Considerations}
 
-ZGC is solely implemented for 64-bit architecture and does not support 32-bit~\cite{zgc_deep_dive}. Hence, in our effort to adapt the allocator for ZGC, it is reasonable for the allocator to also be limited to the same scope. The authors of TLSF have designed their allocator primarily for 32-bit systems due to it being targeted toward real-time embedded systems, which usually operate on 32-bit architecture. However, while TLSF was initially designed with 32-bit systems in mind, its design principles and concepts are not inherently tied to any specific architecture. Hence, adapting the allocator to 64-bit systems does not require any significant changes in its design, apart from aligning memory toward the allocation unit of 8 bytes for 64-bit systems instead of 4 bytes for 32-bit systems.
+ZGC is solely implemented for 64-bit architecture and does not support 32-bit~\cite{zgc_deep_dive}. Hence, in our effort to adapt the allocator for ZGC, it is reasonable for it to also be limited to the same scope. The authors of TLSF have designed their allocator primarily for 32-bit systems due to it being targeted toward real-time embedded systems, which usually operate on 32-bit architecture. However, with its intended target in mind, the design principles and concepts of TLSF are not inherently tied to any specific architecture. The main change needed to convert the TLSF design from 32-bit to 64-bit is aligning memory to word size of 8 bytes instead of 4, which does add a slightly larger memory overhead if allocations are not using the extra memory.
 
 \subsection{General and Optimized Versions}
 
-When adapting the allocator we will consider the use cases of either using it as a normal allocator in cases where a traditional malloc/free combination is used, or as a way to allocate objects on pages in ZGC. To minimize the codebase, which is desirable from a maintenance perspective, the allocator will be adapted in a way which allows it to be configured for different use-case. A major benefit of doing this is that different configurations can easily be compared against each other, streamlining the process of measuring efficacy of any adaptations that are made.
+When further adapting the allocator we will consider the use cases of either using it as a normal allocator in cases where a traditional malloc/free combination is used, or as a way to allocate objects on pages in ZGC. To minimize the codebase, which is desirable from a maintenance perspective, the allocator will be adapted in a way which allows it to be configured. A major benefit of doing this is that different configurations can easily be compared against each other, streamlining the process of measuring efficacy of any adaptations that are made.
 
 Worth noting however, is that in the process of redesigning the allocator in a configurable manner, some changes that deviates from the reference implementation will have to be made. Such trade-offs, which will be discussed in more detail later, could be reasonable when extending the interface for supporting multiple configurations, or versions, of the allocator.
 
 \subsection{Reduced Allocation Size Range}
+\label{sec:adaptations:reduced_allocation_range}
 
-In ZGC, small and medium pages only allow the user to allocate in certain size ranges. To our advantage, we can use this to store metadata about the allocator in a more efficient way. Small pages allow sizes in the range [16B, 256KB] and medium pages (256KB, 4MB]. We note that the allowed sizes in the medium range is a factor of 16KB larger than the small range. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16KB for medium pages.
+In ZGC, small and medium pages only allow the user to allocate in certain size ranges. To our advantage, we can use this to store metadata about the allocator in a more efficient way. Small pages allow sizes in the range [16B, 256KB] and medium pages (256KB, 4MB], as mentioned earlier in Section~\ref{sec:zpage}. We note that the allowed sizes in the medium range is a factor of 16KB larger than the small range. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16KB for medium pages.
 
-With the limited allocation size range for small pages in mind, we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the small page range, with a lower-bound of $2^4 =$ 16B and an upper-bound of $2^{17} =$ 128KB. It is desirable to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions. If we want to stay inside the 64-bit limit, we must choose the number of second-levels accordingly. For efficiency reasons again, the number of second levels should be a power of two~\cite{TLSF} so that bit-shift instructions can be used. The only value this leaves us is 4, which requires $14 * 4 =$ 56 bits for storing all metadata.
+With the limited allocation size range for small pages in mind, we are able to limit the number of free-lists we need and in turn the bits used in the bitmaps. We need 14 first-levels to be able to index every power of two inside the small page range, with a lower-bound of $2^4 =$ 16B and an upper-bound of $2^{17} =$ 128KB. It is desirable to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions on lookup. If we want to stay inside the 64-bit limit, we must choose the number of second-levels accordingly. For efficiency reasons again, the number of second levels should be a power of two~\cite{TLSF} so that bit-shift instructions can be used. The only value this leaves us is 4, which results in $14 * 4 =$ 56 bits for storing all metadata.
 
 Since a page is initially 2MB large, the initial block will be significantly larger than the maximum allocation size of 256KB. This means we either need to split it up into multiple blocks of smaller sizes or store it in a different free-list. To solve this we will add a last free-list that is called the "large-list", represented by the 57th bit. The large-list will store blocks that are above the largest index to support storing blocks that are initially very large.
-
-Combining the insight of the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``Two Level'' from Two Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The new bitmap is indexed using the formula: 
-\[
-    \text{bitmap\_index($f, s$)} = f * 4 + s
-\]
-where $f$ and $s$ are the first- and second-level indexes respectively. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\textwidth]{figures/bitmap_flattening.png}
-    \caption{Flattening of the 2D-matrix representation of TLSF bitmaps into a single 64-bit value. The first-level bitmap is disregarded in favor of indexing the new flattened bitmap using the first-level value instead. The number of first-levels are 14, indicated by bits of the same color belonging to the same first-level. The number of second-levels are 4, as indicated by the same number of colored bits.}
-    \label{fig:bitmap_flattening}
-\end{figure}
-
-The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, the adaptation now efficiently determines the relevant free-list by looking in the single bitmap, not two bitmaps as in the original design.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\textwidth]{figures/bitmap_relationship.png}
-    \caption{Relationship between the new bitmap representation and accessing the corresponding free-lists.}
-    \label{fig:bitmap_relationship}
-\end{figure}
-
-% TODO: Detta borde flyttas till discussion.
-% A drawback of dividing the memory into only four second-levels per fist-level is that there is less chance that a block is closer to the size that we want to allocate. This could potentially lead to higher fragmentation, as there are fewer size classes of blocks available. However, this is generally not a problem...
 
 % TODO: Cite TLSF paper.
 % Benefits: Reduced memory overhead, cache efficiency, Simplified indexing (and Atomic operations??)
@@ -51,7 +27,7 @@ The correlation between the bitmap and the free-lists is depicted in Figure~\ref
 
 Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the ``holes'' of a page. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer allocation.
 
-Most allocators start with an unused chunk of memory, allowing them to track and keep an up-to-date record of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need to update the allocator's internal representation to align with the contents of the memory. In ZGC, the latest live analysis of a page contains an accurate representation of what data is alive in the page's underlying memory. This information can therefore be used to update the allocator's internal representation after a transition to using an allocator.
+Most allocators start with an unused chunk of memory, allowing them to track and keep an up-to-date record of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need a way to update the allocator's internal representation to align with the contents of the memory. In ZGC, the latest live analysis of a page contains an accurate representation of what data is alive in the page's underlying memory. This information can therefore be used to update the allocator's internal representation after a transition to using an allocator.
 
 The construction of the allocator's representation involves a two-step process that extends the optimized allocator's API. Initially, the representation must be cleared so that any previous data is removed. When clearing the allocator, a block is allocated to cover the entirety of the underlying memory. This allows the user to invoke a function to free blocks within specified ranges, allowing to selectively ``carve'' segments free memory from the initially allocated block. When freeing ranges of memory, we only consider four cases: 
 
@@ -88,48 +64,21 @@ next = get\_next\_block(current)\;
 \caption{Algorithm for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list before the newly coalesced block is inserted.}
 \end{algorithm}
 
-\subsubsection{Disregarding Size for Allocated Blocks}
 
 \subsubsection{Block Header Adjustments}
 
-R. Jones et al~\cite[Page 103]{gchandbook} discuss that in the context of using allocators in garbage collectors, it is a reasonable approach to remove certain parts of the so called boundary tag, or block header for TLSF. This is because a garbage collector know significantly more about the memory being processed than what a traditional system using a general purpose memory allocator does. This allows us to, for example, defer coalescing by default, transition between different allocators and optimize the bitmap layout from knowing what sizes will be allocated beforehand.
+R. Jones et al.~\cite[Page 103]{gchandbook} discuss that in the context of using allocators in garbage collectors, it is a reasonable approach to remove certain parts of the so-called boundary tag, or block header for TLSF. This is because we know the precise context the allocator will be used in, as opposed to a general-purpose version of the allocator designed for many use-cases.
 
-Combining the insights from the adaptations made so far, we can observe that storing a pointer to the previous physical block is no longer needed in the optimized version. This is because the previous physical pointer is only used when calling free and coalescing blocks with their physical neighbors. Following this, we will redesign the header for the previous physical pointer to be removed in the optimized version and still kept in the general version. 
+From the list of adaptations discussed so far, we can observe that storing a pointer to the previous physical block is less relevant if the emphasis is shifted away from freeing, and in turn, coalescing blocks. Following this, the previous physical pointer can be removed from the block header in the optimized version to reduce the header overhead. Additionally, with respect to the reduced allocation size range discussed in Section~\ref{sec:adaptations:reduced_allocation_range}, we can further reduce the footprint of the block header by converting the next and prev pointers to offsets instead. This is reasonable since 
 
-% TODO: Disadventageous for small allocations, will have to be measured in practice.
-
-The block header, as used in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the next and prev pointers are stored in the unused parts of free blocks and are unused in allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer allows us to get the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}. In the optimized header, the next and prev pointers have been converted to offsets, allowing them to be 32-bits each. Additionally, both the size and the now next/prev offsets are only stored in the unused parts of free blocks, allowing for a 0-byte header for allocated blocks.
-
-% In the optimized header, the only constant overhead is the size field, as the next and prev pointers are only used in the unused parts of free blocks, as in the reference implementation. Additionally, the previous physical pointer is completely ignored in the optimized header.
-
-\begin{figure}[H]
-    \centering
-    \begin{subfigure}[b]{0.3\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_adap_reference.png}
-        \caption{Reference implementation block header.}
-        \label{fig:blockheader_adap_reference}
-    \end{subfigure}%
-    \hfill
-    \begin{subfigure}[b]{0.3\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_adap_general.png}
-        \caption{Adapted general block header.}
-        \label{fig:blockheader_adap_general}
-    \end{subfigure}%
-    \hfill
-    \begin{subfigure}[b]{0.3\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_adap_optimized.png}
-        \caption{Adapted optimized block header.}
-        \label{fig:blockheader_adap_optimized}
-    \end{subfigure}
-    \caption{Overview of block header contents and adaptations. Dashed fields are only unused in the unused part of free blocks and crossed out fields are unused.}
-    \label{fig:blockheader_adaptations}
-\end{figure}
+From the list of adaptations discussed so far, we can observe that storing a pointer to the previous physical block is no longer necessary in the optimized version. This because the previous physical pointer is only used when calling free and coalescing blocks with their physical neighbors. Both of these use-cases will be less relevant in the optimized version and thus allows us to slim the header by removing the previous physical block pointer.
 
 The goal of changing the header is to reduce the constant block header overhead required when allocating blocks. This is especially important when most allocations are small, where the block overhead is most significant. With the new design for the block header, the constant block header overhead for the optimized version is reduced to only 8 bytes for storing the size of the block. However, reducing the overhead for optimized headers has required us to instead increase the overhead for the general version.
 
+
+We would also want to reduce the overhead for storing the next and prev pointers to be offsets instead, which
+
+% TODO: Disadventageous for small allocations, will have to be measured in practice.
 % Block sizes can be stored in much less than 64 bits, but due to alignment etc it is reasonable to use a 64-bit value to store the size anyways.
 
 %%% Local Variables:

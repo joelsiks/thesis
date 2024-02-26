@@ -17,7 +17,7 @@ Allocations inside TLSF are managed using blocks. Blocks are managed using two d
     \label{fig:blockheader_reference}
 \end{figure}
 
-\subsubsection{Allocation and Freeing Strategy}
+\subsection{Allocation and Freeing Strategy}
 
 While from the user's perspective, TLSF behaves similarly to familiar memory allocation and deallocation functions like malloc/free in libc\footnote{See the Linux Programmer's Manual for more information on `malloc()` and `free()`. Accessed online at: \url{https://man7.org/linux/man-pages/man3/malloc.3.html}}, its distinctive characteristics lie in its internal mechanisms, which will be discussed next.
 
