@@ -1,4 +1,13 @@
 
+% I want to describe that even though allocators have been designed about for a long time, the problem is still not solved.
+% Perhaps quote the TLSF paper?
+
+Due to the large number of existing allocator designs, one might draw the conclusion that most problems of dynamic memory allocation have already been solved. For most cases, a general purpose allocator designed to be used in any system or environment performs well on average, in terms of response time and fragmentation. However, there often exist areas of improvement depending on how much the use case is narrowed down. For example, a garbage collector using an allocator know more about the objects being allocated than most other users of an allocator would.
+
+From the widely used dlmalloc by Doug Lea~\cite{dlmalloc} and newer adaptations of it such as jemalloc and tcmalloc
+
+One of the most widely used allocators is dlmalloc, created by Doug Lea~\cite{dlmalloc}. 
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "main"
