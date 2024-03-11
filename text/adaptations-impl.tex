@@ -26,7 +26,7 @@ where $f$ and $s$ are the first- and second-level indexes respectively. Addition
     \label{fig:bitmap_flattening}
 \end{figure}
 
-The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, the adaptation now efficiently determines the relevant free-list by looking in the single bitmap, not two bitmaps as in the original design.
+The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, the adaptation now more efficiently determines the relevant free-list by looking in the single bitmap, not two bitmaps as in the original design.
 
 \begin{figure}[H]
     \centering
@@ -36,11 +36,12 @@ The correlation between the bitmap and the free-lists is depicted in Figure~\ref
 \end{figure}
 
 \subsection{Block Header Adjustments and 0-byte Header}
+\label{sec:adaptations_impl:0-byte-header}
 
-The block header, as used in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, not for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer this way allows us to have the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}, while using the same block header definition as the general version. To further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32-bits each. 
+The block header, as designed in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, not for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer this way allows us to have the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}, while using the same block header definition as the general version. To further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each. 
 
 
-And in relation to this, both the size and the now next/prev offsets are only stored in the unused parts of free blocks, allowing for the header in the optimized version to essentially take up 0-bytes for allocated blocks and 16-bytes for free blocks, which is stored in the unused part of the free block.
+And in relation to this, both the size and the now next/prev offsets are only stored in the unused parts of free blocks, allowing for the header in the optimized version to essentially take up 0 bytes for allocated blocks and 16 bytes for free blocks, which is stored in the unused part of the free block.
 
 % In the optimized header, the only constant overhead is the size field, as the next and prev pointers are only used in the unused parts of free blocks, as in the reference implementation. Additionally, the previous physical pointer is completely ignored in the optimized header.
 
@@ -68,6 +69,36 @@ And in relation to this, both the size and the now next/prev offsets are only st
     \end{subfigure}
     \caption{Overview of block header contents and adaptations. Dashed fields are only unused in the unused part of free blocks and crossed out fields are unused.}
     \label{fig:blockheader_adaptations}
+\end{figure}
+
+\subsection{Concurrency Implementation}
+
+For the optimized version we have implemented concurrency in a lock-free manner. To do this, we have made a few simplifications to reduce the complexity of the inner data structures that are used in the allocator. The major change is that the pointer to the previous free block inside block headers is ignored completely, which changes the appearance of the free-lists to a singly-linked list from a doubly-linked list. Furthermore, the singly-linked list will only be allowed to be altered from the head, essentially making it a stack. This is a reasonable approach since elements are only potentially removed from an arbitrary position inside the free-list if we allow for immediate coalescing, which is not the case in the optimized version.
+
+M. Herlihy and N. Shavit~\cite[Chapter 11]{artofmpprogramming} describes the design and inner-workings of a lock-free stack from which the concurrent implementation of the allocator is largely based on. For reference, we will go over how a lock-free stack work and how it connects to the data structure inside the allocator.
+
+A stack only requires two operations: \texttt{push()} and \texttt{pop()}, which are named \texttt{insert()} and \texttt{remove()} in the allocator to stay consistent with their meaning from the general version. The insert operation replaces the head of the stack, or free-list, with a new block, whilst the remove operation removes the head of the free-list and replaces it with the next block, if any, in the free-list. In order to make the allocator work in a thread-safe manner, we only need to make these two operations concurrent, since all other operations in the allocator can be done independently of other threads.
+
+\subsubsection{Inserting a block}
+
+\subsubsection{Removing a block}
+
+\subsubsection{ABA Problem}
+
+% Do I need to explain the ABA problem or just how I've solved it?
+% Should I explain it here or in the background?
+
+% To remind, the ABA problem happens when a thread reads the value it wants to change with compare-and-swap, gets preempted, and when it resumes the actual value of the pointer happens to be equal to what the thread read before. Therefore the compare-and-swap operation may succeed despite data structure modifications possibly done by other threads during the preemption time.
+
+A general strategy to avoid the ABA problem is to guarantee that all values being used are fundamentally unique in the sense that they are only used once. Making sure that all values are unique solves the ABA problem by allowing us to identify if the value has changed or not. However, the values that are used in the allocator's free-lists are not unique. The values stored are pointers to blocks, which might be inserted and removed an arbitrary number of times, and thus, is not unique. A way around this is to apply a version tag to each value used in the free-lists, which allow us to uniquely identify the same value by using different versions.
+
+The use of a version tag is described by D. Dechev et al.~\cite{bjarne_aba} to be the most commonly cited solution for ABA avoidance and an effective one also. However, it is clearly stated that due to how compare-and-swap (CAS) instructions work, which are used to atomically exchange/swap values, it is desirable to store the value and version tag in a single word, i.e 8-bytes on a 64-bit system. In the use case of using the allocator for pages in ZGC, this is not a problem at all. In fact, it is the same principle that is applied in Section~\cite{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. Making this conversion allows us to store the version tag in the remaining lower 32-bits, fitting the value and version tag in a 64-bit value, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{figures/concurrent_head_bits.png}
+    \caption{Bit representation of the head's of free-lists in the allocator. The 32 most significant bits are used to store the offset and the 32 least significant bits are used to store a version tag.}
+    \label{fig:concurrent_head_bits}
 \end{figure}
 
 % TODO: Detta borde flyttas till discussion.
