@@ -60,27 +60,19 @@ next = get\_next\_block(current)\;
 \caption{Algorithm for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list before the newly coalesced block is inserted.}
 \end{algorithm}
 
-
 \subsubsection{Block Header Adjustments}
 
 R. Jones et al.~\cite[Page 103]{gchandbook} discuss that in the context of using allocators in garbage collectors, it is a reasonable approach to remove certain parts of the so-called boundary tag, or block header for TLSF. This is because we know the precise context the allocator will be used in, as opposed to a general-purpose version of the allocator designed for many use-cases.
 
-From the list of adaptations discussed so far, we can observe that storing a pointer to the previous physical block is less relevant if the emphasis is shifted away from freeing, and in turn, coalescing blocks. Following this, the previous physical pointer can be removed from the block header in the optimized version to reduce the header overhead. Additionally, with respect to the reduced allocation size range discussed in Section~\ref{sec:adaptations:reduced_allocation_range}, we can further reduce the footprint of the block header by converting the next and prev pointers to offsets instead. This is reasonable since 
-
-From the list of adaptations discussed so far, we can observe that storing a pointer to the previous physical block is no longer necessary in the optimized version. This because the previous physical pointer is only used when calling free and coalescing blocks with their physical neighbors. Both of these use-cases will be less relevant in the optimized version and thus allows us to slim the header by removing the previous physical block pointer.
+From the list of adaptations discussed so far, we can observe that storing a pointer to the previous physical block is less relevant if the emphasis is shifted away from freeing, and in turn, coalescing blocks. Following this, the previous physical pointer can be removed from the block header in the optimized version to reduce the header overhead. Additionally, with respect to the reduced allocation size range discussed in Section~\ref{sec:adaptations:reduced_allocation_range}, we can further reduce the footprint of the block header by converting the next and prev pointers to offsets instead. This would convert 64-bit pointers to 32-bit offsets, where 32-bits is more than enough to offset into 2MB pages in ZGC.
 
 The goal of changing the header is to reduce the constant block header overhead required when allocating blocks. This is especially important when most allocations are small, where the block overhead is most significant. With the new design for the block header, the constant block header overhead for the optimized version is reduced to only 8 bytes for storing the size of the block. However, reducing the overhead for optimized headers has required us to instead increase the overhead for the general version.
 
-
-We would also want to reduce the overhead for storing the next and prev pointers to be offsets instead, which
-
 \subsection{Concurrency}
 
-% Use cases. List them and what we need to be able to solve.
-% Thread-Local GC?
+Considering that ZGC is a concurrent garbage collector, it is reasonable for the allocator to also support concurrency. There are several potential use-cases within ZGC that could benefit from a concurrent allocator, such as Thread-Local garbage collection and reference-counting in the old generation. However, at this stage, the allocator will not be adapted to any specific use-case, apart from the general adaptation of it being concurrent. By incorporating concurrency into the allocator's design alongside other adaptations, it becomes better equipped to remain relevant for evolving use-cases beyond the scope of this thesis.
 
-% TODO: Disadventageous for small allocations, will have to be measured in practice.
-% Block sizes can be stored in much less than 64 bits, but due to alignment etc it is reasonable to use a 64-bit value to store the size anyways.
+Concurrency will be implemented in the allocator so that allocations and free's can be called in a thread-safe manner with many threads allocating and freeing simultaneously. Previous adaptations, such as limiting the allocation size ranges, smaller bitmaps and block header adjustments, significantly facilitates the implementation of concurrency in the allocator. As will be discussed further when we describe the specific implementation in Section~\ref{}, concurrency will be supported in a lock-free manner. This approach requires addressing challenges such as the ABA problem, which is considered fully in Section~\ref{}.
 
 %%% Local Variables:
 %%% mode: latex

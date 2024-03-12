@@ -38,8 +38,7 @@ The correlation between the bitmap and the free-lists is depicted in Figure~\ref
 \subsection{Block Header Adjustments and 0-byte Header}
 \label{sec:adaptations_impl:0-byte-header}
 
-The block header, as designed in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, not for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer this way allows us to have the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}, while using the same block header definition as the general version. To further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each. 
-
+The block header, as designed in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, not for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer this way allows us to have the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}, while using the same block header definition as the general version. To further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each.
 
 And in relation to this, both the size and the now next/prev offsets are only stored in the unused parts of free blocks, allowing for the header in the optimized version to essentially take up 0 bytes for allocated blocks and 16 bytes for free blocks, which is stored in the unused part of the free block.
 
@@ -79,20 +78,16 @@ M. Herlihy and N. Shavit~\cite[Chapter 11]{artofmpprogramming} describes the des
 
 A stack only requires two operations: \texttt{push()} and \texttt{pop()}, which are named \texttt{insert()} and \texttt{remove()} in the allocator to stay consistent with their meaning from the general version. The insert operation replaces the head of the stack, or free-list, with a new block, whilst the remove operation removes the head of the free-list and replaces it with the next block, if any, in the free-list. In order to make the allocator work in a thread-safe manner, we only need to make these two operations concurrent, since all other operations in the allocator can be done independently of other threads.
 
-\subsubsection{Inserting a block}
-
-\subsubsection{Removing a block}
-
-\subsubsection{ABA Problem}
+\subsubsection{Solving The ABA Problem}
 
 % Do I need to explain the ABA problem or just how I've solved it?
 % Should I explain it here or in the background?
 
 % To remind, the ABA problem happens when a thread reads the value it wants to change with compare-and-swap, gets preempted, and when it resumes the actual value of the pointer happens to be equal to what the thread read before. Therefore the compare-and-swap operation may succeed despite data structure modifications possibly done by other threads during the preemption time.
 
-A general strategy to avoid the ABA problem is to guarantee that all values being used are fundamentally unique in the sense that they are only used once. Making sure that all values are unique solves the ABA problem by allowing us to identify if the value has changed or not. However, the values that are used in the allocator's free-lists are not unique. The values stored are pointers to blocks, which might be inserted and removed an arbitrary number of times, and thus, is not unique. A way around this is to apply a version tag to each value used in the free-lists, which allow us to uniquely identify the same value by using different versions.
+A strategy for solving the ABA problems is ensuring that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, inside the allocators, pointers to blocks are not unique and can be inserted and removed any number of times. A way around this is to apply a so-called version tag to each pointer, which allow us to uniquely identify pointers by their version.
 
-The use of a version tag is described by D. Dechev et al.~\cite{bjarne_aba} to be the most commonly cited solution for ABA avoidance and an effective one also. However, it is clearly stated that due to how compare-and-swap (CAS) instructions work, which are used to atomically exchange/swap values, it is desirable to store the value and version tag in a single word, i.e 8-bytes on a 64-bit system. In the use case of using the allocator for pages in ZGC, this is not a problem at all. In fact, it is the same principle that is applied in Section~\cite{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. Making this conversion allows us to store the version tag in the remaining lower 32-bits, fitting the value and version tag in a 64-bit value, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
+Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, it is stated that due to how compare-and-swap (CAS) instructions work, it is desirable to store the pointer and version tag in a single word, i.e 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem at all as the same principle that is applied in Section~\cite{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets can be applied here. Making this conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
 
 \begin{figure}[H]
     \centering
@@ -100,6 +95,50 @@ The use of a version tag is described by D. Dechev et al.~\cite{bjarne_aba} to b
     \caption{Bit representation of the head's of free-lists in the allocator. The 32 most significant bits are used to store the offset and the 32 least significant bits are used to store a version tag.}
     \label{fig:concurrent_head_bits}
 \end{figure}
+
+\subsubsection{Inserting a block}
+
+The process of concurrently inserting a block into a free-list is outlined in Algorithm~\ref{algorithm:concurrent_insert_block}. Notably, both the \texttt{load()} and \texttt{compare\_exchange()} operations are atomic. It is essential to recognize that, between loading the old head from the free-list and executing the \texttt{compare\_exchange()} operation, the new head must be assembled using data from the old head. However, there exists a potential issue wherein the thread responsible for this construction may be preempted, allowing another thread to modify the head during this time. To address this, if the \texttt{compare\_exchange()} operation fails, the thread will loop and create a new head until it successfully performs the operation.
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \SetKwInOut{Input}{}
+    \SetKwRepeat{Do}{do}{while}
+
+    \SetKwFunction{FMain}{insert\_block}
+    \SetKwProg{Fn}{Function}{:}{\KwRet}
+    \Fn{\FMain{blk}}{
+    mapping = get\_mapping(blk->size)\;
+    \Do{blocks[mapping].compare\_exchange(old\_head, new\_head)}{ 
+        old\_head = blocks[mapping].load()\;
+
+        version, old\_head\_ptr = split\_tagged\_head(old\_head)\;
+        blk->next = old\_head\_ptr\;
+
+        new\_head = construct\_new\_head(inserted\_block, version + 1)
+    }
+    }
+\label{algorithm:concurrent_insert_block}
+\caption{Concurrent insertion of a block into the head of a free-list.}
+\end{algorithm}
+
+\subsubsection{Removing a block}
+
+\begin{algorithm}[H]
+    \SetAlgoLined
+    \SetKwInOut{Input}{}
+
+    \SetKwFunction{FMain}{remove\_block}
+    \SetKwProg{Fn}{Function}{:}{\KwRet}
+    \Fn{\FMain{mapping}}{
+        old\_head = blocks[mapping].load()\;
+        new\_head\_ptr = get\_next\_block(old\_head)\;
+        new\_head = construct\_new\_head(new\_head\_ptr, version + 1)\;
+    }
+
+\label{algorithm:concurrent_remove_block}
+\caption{Concurrent removal of the head of a free-list.}
+\end{algorithm}
 
 % TODO: Detta borde flyttas till discussion.
 % A drawback of dividing the memory into only four second-levels per fist-level is that there is less chance that a block is closer to the size that we want to allocate. This could potentially lead to higher fragmentation, as there are fewer size classes of blocks available. However, this is generally not a problem...
