@@ -71,6 +71,7 @@ And in relation to this, both the size and the now next/prev offsets are only st
 \end{figure}
 
 \subsection{Concurrency Implementation}
+\label{sec:adaptations_impl:concurrency}
 
 For the optimized version we have implemented concurrency in a lock-free manner. To do this, we have made a few simplifications to reduce the complexity of the inner data structures that are used in the allocator. The major change is that the pointer to the previous free block inside block headers is ignored completely, which changes the appearance of the free-lists to a singly-linked list from a doubly-linked list. Furthermore, the singly-linked list will only be allowed to be altered from the head, essentially making it a stack. This is a reasonable approach since elements are only potentially removed from an arbitrary position inside the free-list if we allow for immediate coalescing, which is not the case in the optimized version.
 
@@ -78,10 +79,9 @@ M. Herlihy and N. Shavit~\cite[Chapter 11]{artofmpprogramming} describes the des
 
 A stack only requires two operations: \texttt{push()} and \texttt{pop()}, which are named \texttt{insert()} and \texttt{remove()} in the allocator to stay consistent with their meaning from the general version. The insert operation replaces the head of the stack, or free-list, with a new block, whilst the remove operation removes the head of the free-list and replaces it with the next block, if any, in the free-list. In order to make the allocator work in a thread-safe manner, we only need to make these two operations concurrent, since all other operations in the allocator can be done independently of other threads.
 
-\subsubsection{Solving The ABA Problem}
+To be able to operate on the free-list concurrently without locks, we will use the atomic operations \texttt{load()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/load}} and \texttt{compare\_exchange()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange}}, provided in the C++ standard library. \texttt{load()} returns the current value of an atomic variable and \texttt{compare\_exchange()} compares the value of a variable with an expected value, and if they are equal, it is replaced by another value.
 
-% Do I need to explain the ABA problem or just how I've solved it?
-% Should I explain it here or in the background?
+\subsubsection{Solving The ABA Problem}
 
 % To remind, the ABA problem happens when a thread reads the value it wants to change with compare-and-swap, gets preempted, and when it resumes the actual value of the pointer happens to be equal to what the thread read before. Therefore the compare-and-swap operation may succeed despite data structure modifications possibly done by other threads during the preemption time.
 
@@ -117,12 +117,19 @@ The process of concurrently inserting a block into a free-list is outlined in Al
 
         new\_head = construct\_new\_head(inserted\_block, version + 1)
     }
+    update\_bitmap(mapping)\;
     }
 \label{algorithm:concurrent_insert_block}
 \caption{Concurrent insertion of a block into the head of a free-list.}
 \end{algorithm}
 
+\newpage
 \subsubsection{Removing a block}
+
+The process of concurrently removing a block from a free-list, as illustrated in Algorithm~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. The main difference is that instead of a while-loop, removal involves replacing the head with the next block in the list, possibly a nullptr.
+
+If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contain additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails, without looping until successful like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again, which may operate on the same free-list.
+
 
 \begin{algorithm}[H]
     \SetAlgoLined
@@ -132,8 +139,17 @@ The process of concurrently inserting a block into a free-list is outlined in Al
     \SetKwProg{Fn}{Function}{:}{\KwRet}
     \Fn{\FMain{mapping}}{
         old\_head = blocks[mapping].load()\;
-        new\_head\_ptr = get\_next\_block(old\_head)\;
+        version, old\_head\_ptr = split\_tagged\_head(old\_head)\;
+        new\_head\_ptr = get\_next\_block(old\_head\_ptr)\;
         new\_head = construct\_new\_head(new\_head\_ptr, version + 1)\;
+
+        \uIf{blocks[mapping].compare\_exchange(old\_head, new\_head)} {
+            update\_bitmap(mapping)\;
+            \KwRet new\_head\_ptr
+        } \Else {
+            \KwRet nullptr
+        }
+
     }
 
 \label{algorithm:concurrent_remove_block}

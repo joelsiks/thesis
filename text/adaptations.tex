@@ -1,4 +1,4 @@
-In this section we describe adaptations of the reference implementation of the TLSF allocator to make it more suited toward being used in the context of a garbage collector, specifically ZGC. The implementations of the adaptations described here and their impact are explained and discussed in Section~\ref{sec:adaptations-impl}.
+In this section we describe adaptations of the reference implementation of the TLSF allocator to make it more suited toward being used in the context of a garbage collector, specifically ZGC. The implementations of the adaptations described here, and their impact, are explained in Section~\ref{sec:adaptations-impl}.
 
 \subsection{Architectural Considerations}
 \label{sec:adaptations:architectural-considerations}
@@ -70,9 +70,9 @@ The goal of changing the header is to reduce the constant block header overhead 
 
 \subsection{Concurrency}
 
-Considering that ZGC is a concurrent garbage collector, it is reasonable for the allocator to also support concurrency. There are several potential use-cases within ZGC that could benefit from a concurrent allocator, such as Thread-Local garbage collection and reference-counting in the old generation. However, at this stage, the allocator will not be adapted to any specific use-case, apart from the general adaptation of it being concurrent. By incorporating concurrency into the allocator's design alongside other adaptations, it becomes better equipped to remain relevant for evolving use-cases beyond the scope of this thesis.
+Considering that ZGC is a concurrent garbage collector, it is reasonable for the allocator to also support concurrency. There are several potential use-cases within ZGC that could benefit from a concurrent allocator, such as thread-local garbage collection and reference-counting in the old generation. However, at this stage, the allocator will not be adapted to any specific use-case, apart from the general adaptation of it being concurrent. By incorporating concurrency into the allocator's design alongside other adaptations, it becomes better equipped to remain relevant for evolving use-cases beyond the scope of this thesis.
 
-Concurrency will be implemented in the allocator so that allocations and free's can be called in a thread-safe manner with many threads allocating and freeing simultaneously. Previous adaptations, such as limiting the allocation size ranges, smaller bitmaps and block header adjustments, significantly facilitates the implementation of concurrency in the allocator. As will be discussed further when we describe the specific implementation in Section~\ref{}, concurrency will be supported in a lock-free manner. This approach requires addressing challenges such as the ABA problem, which is considered fully in Section~\ref{}.
+Concurrency will be implemented in the allocator so that allocations and free's can be called in a thread-safe manner with many threads allocating and freeing simultaneously. Previous adaptations, such as limiting the allocation size ranges, smaller bitmaps and block header adjustments, significantly facilitates the implementation of concurrency in the allocator. As will be discussed further when we describe the specific implementation in Section~\ref{sec:adaptations_impl:concurrency}, concurrency will be supported in a lock-free manner. This approach requires addressing challenges such as the ABA problem, which is considered fully in Section~\ref{sec:adaptations_impl:concurrency}.
 
 %%% Local Variables:
 %%% mode: latex
