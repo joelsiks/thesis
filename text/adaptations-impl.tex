@@ -82,17 +82,18 @@ A stack only requires two operations: \texttt{push()} and \texttt{pop()}, which 
 To be able to operate on the free-list concurrently without locks, we will use the atomic operations \texttt{load()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/load}} and \texttt{compare\_exchange()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange}}, provided in the C++ standard library. \texttt{load()} returns the current value of an atomic variable and \texttt{compare\_exchange()} compares the value of a variable with an expected value, and if they are equal, it is replaced by another value.
 
 \subsubsection{Solving The ABA Problem}
+\label{sec:adaptations_impl:aba_problem}
 
 % To remind, the ABA problem happens when a thread reads the value it wants to change with compare-and-swap, gets preempted, and when it resumes the actual value of the pointer happens to be equal to what the thread read before. Therefore the compare-and-swap operation may succeed despite data structure modifications possibly done by other threads during the preemption time.
 
 A strategy for solving the ABA problems is ensuring that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, inside the allocators, pointers to blocks are not unique and can be inserted and removed any number of times. A way around this is to apply a so-called version tag to each pointer, which allow us to uniquely identify pointers by their version.
 
-Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, it is stated that due to how compare-and-swap (CAS) instructions work, it is desirable to store the pointer and version tag in a single word, i.e 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem at all as the same principle that is applied in Section~\cite{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets can be applied here. Making this conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
+Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, it is stated that due to how compare-and-swap (CAS) (\texttt{compare\_exchange()} in C++) work, it is desirable to store the pointer and version tag in a single word, i.e 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. Making this conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\textwidth]{figures/concurrent_head_bits.png}
-    \caption{Bit representation of the head's of free-lists in the allocator. The 32 most significant bits are used to store the offset and the 32 least significant bits are used to store a version tag.}
+    \caption{Bit representation of a free-list head in the allocator. The 32 most significant bits are used to store the offset and the 32 least significant bits are used to store the version tag.}
     \label{fig:concurrent_head_bits}
 \end{figure}
 
@@ -123,13 +124,11 @@ The process of concurrently inserting a block into a free-list is outlined in Al
 \caption{Concurrent insertion of a block into the head of a free-list.}
 \end{algorithm}
 
-\newpage
 \subsubsection{Removing a block}
 
-The process of concurrently removing a block from a free-list, as illustrated in Algorithm~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. The main difference is that instead of a while-loop, removal involves replacing the head with the next block in the list, possibly a nullptr.
+The process of concurrently removing a block from a free-list, as illustrated in Algorithm~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. The main difference is that instead of a while-loop, removal involves replacing the head with the next block in the list, possibly a NULL value.
 
-If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contain additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails, without looping until successful like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again, which may operate on the same free-list.
-
+If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contain additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails, without looping until successful like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again.
 
 \begin{algorithm}[H]
     \SetAlgoLined
@@ -155,9 +154,6 @@ If the \texttt{compare\_exchange()} operation fails when removing a block, there
 \label{algorithm:concurrent_remove_block}
 \caption{Concurrent removal of the head of a free-list.}
 \end{algorithm}
-
-% TODO: Detta borde flyttas till discussion.
-% A drawback of dividing the memory into only four second-levels per fist-level is that there is less chance that a block is closer to the size that we want to allocate. This could potentially lead to higher fragmentation, as there are fewer size classes of blocks available. However, this is generally not a problem...
 
 %%% Local Variables:
 %%% mode: latex
