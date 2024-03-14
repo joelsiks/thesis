@@ -1,9 +1,20 @@
 
 % What has been the method so far?
 
-% Start by implementing the reference design to have something to start from.
+The methodology is divided into four parts:
 
-% 
+\begin{enumerate}
+    \item Implement a reference version of an allocator and verify its functionality.
+    \item Identify important aspects for memory allocation in garbage collection.
+    \item Adapt the reference version in regard to important aspects.
+    \item Evaluate both the reference and adapted version of the allocator.
+\end{enumerate}
+
+The very first thing that was done was to implement a reference version of a memory allocator, TLSF in this case. The reference version will be tested using real-world programs to make sure that it works. The main method used to test and verify the correctness of the reference implementation is to replace \texttt{malloc()} and \texttt{free()} with a wrapper that uses our reference allocator. The wrapper redefines all memory allocation functions defined in C's \texttt{stdlib.h}\footnote{malloc.3\url{https://man7.org/linux/man-pages/man3/malloc.3.html}}. To override libc's provided \texttt{malloc} implementation, we will use Linux's \texttt{LD\_PRELOAD} environment variable, which allows us to preload shared libraries that will be used before any system libraries.
+
+The next step is identifying what areas are most reasonable and likely to have the largest impact when adapting the allocator.
+
+With a set of approaches for adapting the allocator in our disposal we will continue with incrementally adapt and test the allocator. Most adaptations will be tested through a set of independent unit tests that ensure the allocator works as intended. However, as detailed in Section~\ref{sec:delimitations}, the allocator will not be tested through integration with ZGC.
 
 
 %%% Local Variables:
