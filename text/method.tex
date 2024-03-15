@@ -1,21 +1,22 @@
 
-% What has been the method so far?
-
-The methodology is divided into four parts:
+The methodology is divided into four distinct phases:
 
 \begin{enumerate}
     \item Implement a reference version of an allocator and verify its functionality.
     \item Identify important aspects for memory allocation in garbage collection.
-    \item Adapt the reference version in regard to important aspects.
-    \item Evaluate both the reference and adapted version of the allocator.
+    \item Adapt the reference version with regard to aspects from previous step.
+    \item Evaluate both the reference and adapted version of the allocator in terms of fragmentation, memory efficiency and speed.
 \end{enumerate}
 
-The very first thing that was done was to implement a reference version of a memory allocator, TLSF in this case. The reference version will be tested using real-world programs to make sure that it works. The main method used to test and verify the correctness of the reference implementation is to replace \texttt{malloc()} and \texttt{free()} with a wrapper that uses our reference allocator. The wrapper redefines all memory allocation functions defined in C's \texttt{stdlib.h}\footnote{malloc.3\url{https://man7.org/linux/man-pages/man3/malloc.3.html}}. To override libc's provided \texttt{malloc} implementation, we will use Linux's \texttt{LD\_PRELOAD} environment variable, which allows us to preload shared libraries that will be used before any system libraries.
+The initial step involves implementing a reference version of a memory allocator, specifically the TLSF allocator described in the previous section. Although any free-list based allocator could have been chosen for this work, TLSF stands out in the way that it aligns well a major goal in ZGC: to have a bounded and fast response time. The functionality of the reference implementation is verified using real-world programs. This verification process entails substituting the standard memory allocation functions like malloc/free with a wrapper that utilizes the reference allocator. The wrapper effectively overrides these functions as defined in libc~\cite{mallocman}. The method employed to override functions utilizes the \texttt{LD\_PRELOAD} environment variable in Linux, which enables the preloading of shared libraries prior to system libraries.
 
-The next step is identifying what areas are most reasonable and likely to have the largest impact when adapting the allocator.
+The next step is identifying significant aspects related to memory allocation within the context of garbage collection. This identification process is crucial for determining areas where adaptations to the allocator are likely to yield substantial impact. This will mainly be done through literature review in the area of memory allocation and garbage collection as well as insights about ZGC and general memory usage patterns in Java programs.
 
-With a set of approaches for adapting the allocator in our disposal we will continue with incrementally adapt and test the allocator. Most adaptations will be tested through a set of independent unit tests that ensure the allocator works as intended. However, as detailed in Section~\ref{sec:delimitations}, the allocator will not be tested through integration with ZGC.
+Building upon the insights gained from the previous step, the reference allocator is adapted in areas which are likely to be beneficial for performance. This adaptation process is conducted incrementally, with each modification being tested through unit tests to ensure that the allocator behaves as intended in every step.
 
+Finally, both the reference allocator and its adapted versions are will be compared and evaluated in regard to fragmentation, memory efficiency and speed. Fragmentation is an important metric to consider for memory utilization efficiency, memory overhead and long-term stability of the program. Speed, in terms of runtime performance, is also a valuable metric since it directly impacts the responsiveness of the allocator. More on this in Section~\ref{TODO}.
+
+Note that while integration with ZGC would provide a definitive validation of the allocator's functionality, such integration testing is excluded from the scope of this thesis, as mentioned in Section~\ref{sec:delimitations}. With this said, investigating and implementing adaptations into an allocator in itself will contribute not only to future integration, but adapting any kind of free-list based allocator for use in garbage collection or similar areas.
 
 %%% Local Variables:
 %%% mode: latex

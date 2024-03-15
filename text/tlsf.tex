@@ -19,7 +19,7 @@ Allocations inside TLSF are managed using blocks. Blocks are managed using two d
 
 \subsection{Allocation and Freeing Strategy}
 
-While from the user's perspective, TLSF behaves similarly to familiar memory allocation and deallocation functions like malloc/free in libc\footnote{See the Linux Programmer's Manual for more information on `malloc()` and `free()`. Accessed online at: \url{https://man7.org/linux/man-pages/man3/malloc.3.html}}, its distinctive characteristics lie in its internal mechanisms, which will be discussed next.
+While from the user's perspective, TLSF behaves similarly to familiar memory allocation and deallocation functions like malloc/free in libc~\cite{mallocman}, its distinctive characteristics lie in its internal mechanisms, which will be discussed next.
 
 When a user requests N bytes from the allocator, the allocator aligns N to meet any necessary alignment requirements and applies padding. Subsequently, it searches for a block matching the desired size. If no block within the specific size range is found, the allocator continues its search to identify a larger block. If no block is found, a NULL value is returned. However, if a list containing blocks is found, the allocator picks the first block in the list, regardless of the number of blocks in it. The policy of searching for free-lists and choosing the first block is called Good-Fit by the authors, referred to as a combination of best- and first-fit. This policy was chosen since it performs well in terms of fragmentation. Moreover, if a block larger than the requested size is located, the allocator splits it into two blocks. One block is used to satisfy the request to the user, and the other is inserted back into the allocator.
 
