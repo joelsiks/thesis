@@ -1,4 +1,6 @@
 
+In this section we will go over more detailed implementation details of the adaptations described in the previous section.
+
 \subsection{Allocator Versions}
 
 To facilitate the support for multiple versions of the allocator with a configurable design, the primary TLSF implementation has been abstracted into a base class named \texttt{TLSFBase}. The base class implements all parts described in the TLSF design except for the \texttt{free()} method, which varies greatly between use-cases and should therefore be implemented optimally for every new configuration. For each configuration, the base class enables the user to specify the allocator's behavior through a set of configuration variables, which includes:
@@ -40,8 +42,6 @@ The correlation between the bitmap and the free-lists is depicted in Figure~\ref
 
 The block header, as designed in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, and unused for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer this way allows us to have the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}, while using the same block header definition as the general version. 
 
-As stated in Section~\ref{sec:adaptations:block-header-adjustments}, the size field can be ignored for allocated blocks if the user of the allocator keeps track of its size somewhere else and provides that information upon freeing a block. Additionally, to further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each. Both the size field and next/prev pointers being unused for allocated blocks and stored in the unused parts for free blocks. In the optimized version, this results in the header taking up 0 bytes for allocated blocks and 16 bytes for free blocks.
-
 \begin{figure}[H]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
@@ -68,10 +68,14 @@ As stated in Section~\ref{sec:adaptations:block-header-adjustments}, the size fi
     \label{fig:blockheader_adaptations}
 \end{figure}
 
+As stated in Section~\ref{sec:adaptations:block-header-adjustments}, the size field can be ignored for allocated blocks if the user of the allocator keeps track of its size somewhere else and provides that information upon calling \texttt{free()}. Additionally, to further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each. Both the size and next/prev pointers fields are unused for allocated blocks and stored in the unused parts for free blocks. In the optimized version, this results in the header taking up 0 bytes for allocated blocks, hence the name \textit{0-byte header}, and 16 bytes for free blocks.
+
 \subsection{Concurrency Implementation}
 \label{sec:adaptations_impl:concurrency}
 
-For the optimized version we have implemented concurrency in a lock-free manner. To do this, we have made a few simplifications to reduce the complexity of the inner data structures that are used in the allocator. The major change is that the pointer to the previous free block inside block headers is ignored completely, which changes the appearance of the free-lists to a singly-linked list from a doubly-linked list. Furthermore, the singly-linked list will only be allowed to be altered from the head, essentially making it a stack. This is a reasonable approach since elements are only potentially removed from an arbitrary position inside the free-list if we allow for immediate coalescing, which is not the case in the optimized version.
+Implementing concurrency for the allocator will only require concurrent operations on its free-lists, as it is where blocks are stored and managed. In the reference design, the free-lists are designed as doubly-linked lists. However, lock-free operations on a doubly-linked-list will not be considered due to the complex operations required to support it. Instead, we will simplify the appearance of the free-lists with regard to previously mentioned adaptations to reduce their complexity.
+
+By disregarding the pointer to the previous free block inside block headers, the appearance of the free-lists can be transformed from a doubly-linked list to a singly-linked list. This transformation is possible if we limit ourselves to deferred coalescing, since the previous pointer is only used when inserting blocks at positions other than the head of a free-list. Consequently, by only allowing updates at the head of a free-list, the singly-linked list effectively becomes a stack, simplifying the implementation of a lock-free solution.
 
 M. Herlihy and N. Shavit~\cite[Chapter 11]{artofmpprogramming} describes the design and inner-workings of a lock-free stack from which the concurrent implementation of the allocator is largely based on. For reference, we will go over how a lock-free stack work and how it connects to the data structure inside the allocator.
 

@@ -2,11 +2,18 @@
 % I want to describe that even though allocators have been designed about for a long time, the problem is still not solved.
 % Perhaps quote the TLSF paper?
 
-Due to the large number of existing allocator designs, one might draw the conclusion that most problems of dynamic memory allocation have already been solved. For most cases, a general purpose allocator designed to be used in any system or environment performs well on average, in terms of response time and fragmentation. However, there often exist areas of improvement depending on how much the use case is narrowed down. For example, a garbage collector using an allocator know more about the objects being allocated than most other users of an allocator would.
+A commonly used allocator is dlmalloc~\cite{dlmalloc}, named after and created by Doug Lea. dlmalloc stands out in that it uses different policies to choose blocks depending on the size of the allocation request. In comparison to TLSF, which uses the previously described ``good-fit'' policy, dlmalloc uses four different policies: first-fit, cached blocks, segregated-fits and OS allocation. The approach of using multiple policies aims to provide the best average performance for all different allocation sizes. However, the worst-case response time is usually high or hard to define when not applying the same policy for all allocation sizes.
 
-From the widely used dlmalloc by Doug Lea~\cite{dlmalloc} and newer adaptations of it such as jemalloc and tcmalloc
+In the TLSF paper by M. Masmano et al.~\cite{TLSF}, an experimental analysis is made that compares performance of different allocators, most importantly TLSF and dlmalloc, in terms of processor cycles. The results show that dlmalloc often performs best, and better than TLSF in multiple scenarios. However, in its worst case, dlmalloc has terrible performance compared to other allocators. TLSF on the other hand performs more or less the same regardless of allocation size, making it highly predictable, as is its main selling point.
 
-One of the most widely used allocators is dlmalloc, created by Doug Lea~\cite{dlmalloc}. 
+% Both dlmalloc and TLSF are considered general-purpose allocators in the sense that they do not tailor to any specific use-case, but rather try to perform the best for most use-cases. On the other hand you have custom allocators, those that aim to 
+
+Both dlmalloc and TLSF are considered general-purpose allocators in the sense that they aim to have good performance for most programs using them. What makes them general-purpose is that they lack prior knowledge of the allocation pattern of a program and must therefore account for any pattern. Instead, what programmers frequently do is to write their own custom allocator for their specific program, since they have knowledge about it that a general-purpose allocator does not. A common pattern is to optimize for a specific allocation distribution, which is unique to a specific program. D. A. Barret and B. G. Zorn~\cite{lifetime_predictors_memalloc} used this knowledge to identify that a great fraction of allocations are short-lived and use this to reduce memory overhead and sometimes even CPU performance. They do this by trying to predict the lifetime of allocations and treat allocations that are likely short in a different way than other allocations.
+
+D. A. Barret and B. G. Zorn's work is very similar with this thesis in that it aims to understand and utilize the context in which an allocator is used and optimize it to improve memory usage and performance.
+
+
+% This is similar to what this thesis aims to do: adapt an alloctaor to be used in a specific garbage collector.
 
 %%% Local Variables:
 %%% mode: latex
