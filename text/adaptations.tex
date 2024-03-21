@@ -9,9 +9,9 @@ As explained in Section~\ref{sec:tlsf}, the two least significant bits within th
 
 \subsection{General and Optimized Versions}
 
-When further adapting the allocator we will consider the use cases of either using it as a normal allocator in cases where a traditional malloc/free combination is used, or as a way to allocate objects on pages in ZGC. To minimize the codebase, which is desirable from a maintenance perspective, the allocator will be adapted in a way which allows it to be configured. A major benefit of having a configurable allocator is that different configurations can easily be compared against each other, streamlining the process of measuring efficacy of any adaptations that are made. The two configurations we will focus on are the reference allocator and adapated, or optimized, version for ZGC.
+When further adapting the allocator we will consider the use cases of either using it as a normal allocator in cases where a traditional malloc/free combination is used, or as a way to allocate objects on pages in ZGC. A way to realize this is by making the allocator configurable, similarly to what E. Berger et al.~\cite{configurable_allocator} have done, utilizing C++ templates and inheritance. Having a configurable allocator is not only desirable from a maintenance perspective, but it also allows adaptation for changing environment and requirements. Additionally, it becomes easier to compare different versions of the allocator by changing the configuration, streamlining the process of measuring the efficacy of any potential improvements.
 
-Worth noting is that in the process of redesigning the allocator in a configurable manner, some changes that deviates from the reference implementation will have to be made. Such trade-offs, which will be discussed in more detail later, could be reasonable when extending the interface for supporting multiple configurations of the allocator.
+Moving on, we will refer to the use-case of using the allocator as a general allocator as the general version, and the adapted, or optimized, version for ZGC as the optimized version. The general version will aim to be as similar to the reference implementation as possible.
 
 \subsection{Reduced Allocation Size Range}
 \label{sec:adaptations:reduced_allocation_range}
