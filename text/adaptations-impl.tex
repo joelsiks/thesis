@@ -1,17 +1,9 @@
 
-In this section we will go over more detailed implementation details of the adaptations described in the previous section.
+In this section we will go over implementation details of adaptations described in the previous section that require more in-depth explanation.
 
 \subsection{Allocator Versions}
 
-To facilitate the support for multiple versions of the allocator with a configurable design, the primary TLSF implementation has been abstracted into a base class named \texttt{TLSFBase}. The base class implements all parts described in the TLSF design except for the \texttt{free()} method, which varies greatly between use-cases and should therefore be implemented optimally for every new configuration. For each configuration, the base class enables the user to specify the allocator's behavior through a set of configuration variables, which includes:
-
-\begin{enumerate}
-  \item Number of first- and second-level indexes.
-  \item Whether to use second-level or not.
-  \item Minimum block size.
-  \item Whether to use deferred coalescing.
-  \item Block header length.
-\end{enumerate}
+The reference version of the allocator has been abstracted into a base class named \texttt{TLSFBase}. From this base case, the user must provide a set of configuration variables that define how the allocator behaves. As such, each unique set of configuration variables define a new allocator. Additionally, an allocator may override the implementation of the methods defined in the base class so that calculations may be done in a different way. This allows different versions to apply different methods for allocation and freeing for example, as well as different solutions for concurrency.
 
 \subsection{New Bitmap Design}
 

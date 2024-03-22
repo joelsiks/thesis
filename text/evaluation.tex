@@ -1,5 +1,64 @@
 
-%%% Local Variables:
-%%% mode: latex
-%%% TeX-master: "main"
-%%% End:
+When evaluating memory allocators, two primary metrics stand out: performance and fragmentation. Performance entails measuring the time required to perform an allocation or free request within the allocator, while fragmentation assesses how efficiently the allocator utilizes the memory.
+
+\subsection{Allocator Configurations}
+
+% What versions of the allocator am I testing and how can the reader repeat:
+% - Reference allocator
+% - General and optimized allocators (describe with configuration variables)
+
+\iffalse
+
+class BaseConfig {
+public:
+  static const size_t FirstLevelIndex = 32;
+  static const size_t SecondLevelIndexLog2 = 5;
+  static const size_t MBS = 32;
+  static const bool UseSecondLevels = true;
+  static const bool DeferredCoalescing = false;
+  static const size_t BlockHeaderLength = BLOCK_HEADER_LENGTH;
+};
+
+class ZOptimizedConfig {
+public:
+  static const size_t FirstLevelIndex = 14;
+  static const size_t SecondLevelIndexLog2 = 2;
+  static const size_t MBS = 16;
+  static const bool UseSecondLevels = false;
+  static const bool DeferredCoalescing = true;
+  static const size_t BlockHeaderLength = BLOCK_HEADER_LENGTH_SMALL;
+};
+
+
+\fi
+
+\subsection{Measuring Performance}
+
+% What test cases will we consider:
+% - Single allocation/free (measured in processor cycles using rdtsc())
+% - A distribution of allocations (collected from dacapo)
+%   - A mix of allocations/frees, with syntentically added frees (since we cannot gather free call data from dacapo... must mention why)
+
+% How much memory does the allocator have in its pool for the tests.
+% The pool is statically allocated and does not change in size during runtime.
+
+\subsection{Measuring Fragmentation}
+
+To measure internal fragmentation we will use a set of counter that are incremented and decremented during allocations and frees respectively. For each call to allocate, the number of bytes the user has requested along with the actual amount of memory used by the heap is recorded. Conversely, when a user frees a piece of memory, the corresponding amount of requested bytes and actual memory used are subtracted from their respective counters. With the two counters at hand, the internal fragmentation can be calculated as a percentage of the memory that is used as follows:
+\[
+\text{internal\_fragmentation} = \frac{\text{total requested bytes}}{\text{total allocated bytes}}
+\]
+
+Moving on to external fragmentation, which is not as intuitively defined as the metric for internal fragmentation.
+
+% Measure fragmentation:
+% - Internal fragmentation (through counters during allocations/frees)
+% - External fragmentation (SOMEHOW)
+
+\subsection{Machines to Collect Data}
+
+% What hardware are we collecting data on:
+% - OS, CPU (threads, cores), memory
+
+% How are we compiling the allocator
+% - g++, optimization flags, c++ version

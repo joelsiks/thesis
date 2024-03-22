@@ -12,7 +12,11 @@ In the TLSF paper by M. Masmano et al.~\cite{TLSF}, an experimental analysis is 
 
 \newpage
 
-D. A. Barret and B. G. Zorn~\cite{lifetime_predictors_memalloc} have performed a study that aims to understand and utilize the context in which an allocator is used in and optimize it to improve memory usage, similarly to the spirit of what is done in this thesis. They analyzed what kind of changes are often done to general-purpose allocators to make them more suited toward certain programs and concluded that the most common optimization is to tailor the allocator to their programs specific allocation distribution. From this they have applied an algorithm that tries to predict the lifetime of object with varying success that more often than not reduces memory overhead and sometimes even increases CPU performance by treating different lifetimes differently.
+D. A. Barret and B. G. Zorn~\cite{lifetime_predictors_memalloc} have performed a study that aims to understand and utilize the context in which an allocator is used in and optimize it to improve memory usage, similarly to the spirit of what is done in this thesis. 
+
+They analyzed what kind of changes are often done to general-purpose allocators and concluded that the most common optimization is to tailor the allocator to the specific programs specific allocation distribution. 
+
+From this they have applied an algorithm that tries to predict the lifetime of object with varying success that more often than not reduces memory overhead and sometimes even increases CPU performance by treating different lifetimes differently.
 
 % This is similar to what this thesis aims to do: adapt an alloctaor to be used in a specific garbage collector.
 
