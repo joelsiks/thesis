@@ -9,6 +9,8 @@ As explained in Section~\ref{sec:tlsf}, the two least significant bits within th
 
 \subsection{General and Optimized Versions}
 
+% TODO: Ta upp att det är mycket relevant att hålla antalet rader kod minimalt eftersom OpneJDK redan är mycket omfattande och det är vettigt att hålla underhållnadskostnader nere.
+
 When further adapting the allocator we will consider the use cases of either using it as a normal allocator in cases where a traditional malloc/free combination is used, or as a way to allocate objects on pages in ZGC. A way to realize this is by making the allocator configurable, similarly to what E. Berger et al.~\cite{configurable_allocator} have done, utilizing C++ templates and inheritance. Having a configurable allocator is not only desirable from a maintenance perspective, but it also allows adaptation for changing environment and requirements. Additionally, it becomes easier to compare different versions of the allocator by changing the configuration, streamlining the process of measuring the efficacy of any potential improvements.
 
 Moving on, we will refer to the use-case of using the allocator as a general allocator as the general version, and the adapted, or optimized, version for ZGC as the optimized version. The general version will aim to be as similar to the reference implementation as possible.
@@ -30,7 +32,7 @@ To summarize, we now only need 57-bits for storing all information necessary for
 
 \subsection{Transitioning Between Different Allocation Strategies}
 
-Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the ``holes'' of a page. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer allocation.
+Completely phasing out the utilization of bump-pointer allocation may not be optimal, especially when there is no constant requirement to allocate solely within the ``holes'' of a page, as bump-pointer allocation is very fast. Instead, users could employ bump-pointer allocation up to a certain point, at which it becomes advantageous to transition to a more sophisticated allocator for non-bump-pointer allocation.
 
 Most allocators start with an unused chunk of memory, allowing them to track and keep an up-to-date record of what the underlying memory contains. However, in the case where transitioning from bump-pointer to using an allocator, the underlying memory have contents that is not represented in the allocator. To solve this, we need a way to update the allocator's internal representation to align with the contents of the memory. In ZGC, the latest live analysis of a page contains an accurate representation of what data is alive in the page's underlying memory. This information can therefore be used to update the allocator's internal representation after a transition to using an allocator.
 

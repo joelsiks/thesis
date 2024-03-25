@@ -7,40 +7,49 @@ When evaluating memory allocators, two primary metrics stand out: performance an
 % - Reference allocator
 % - General and optimized allocators (describe with configuration variables)
 
-\iffalse
+% The goal is to measure relative performance between the different versions.
 
-class BaseConfig {
-public:
-  static const size_t FirstLevelIndex = 32;
-  static const size_t SecondLevelIndexLog2 = 5;
-  static const size_t MBS = 32;
-  static const bool UseSecondLevels = true;
-  static const bool DeferredCoalescing = false;
-  static const size_t BlockHeaderLength = BLOCK_HEADER_LENGTH;
-};
+The three different versions of the TLSF allocator developed in this work that will be evaluated and compared in this section are: the reference TLSF implementation, the general version and the optimized version for ZGC. Since the use-case of the optimized version is narrowed down significantly from the reference and general versions, the test-cases will also be narrowed down to such use-case. This is reasonable since the purpose is to gauge how well the allocators perform when using them for ZGC.
 
-class ZOptimizedConfig {
-public:
-  static const size_t FirstLevelIndex = 14;
-  static const size_t SecondLevelIndexLog2 = 2;
-  static const size_t MBS = 16;
-  static const bool UseSecondLevels = false;
-  static const bool DeferredCoalescing = true;
-  static const size_t BlockHeaderLength = BLOCK_HEADER_LENGTH_SMALL;
-};
+The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
 
-
-\fi
+\begin{table}[H]
+\centering
+\begin{tabular}{lllll}
+\hline
+Configuration Variable  & General  & \multicolumn{3}{l}{Optimized} \\ \hline
+First-Level Index       & 32       & \multicolumn{3}{l}{14}        \\
+Second-Level Index      & 5        & \multicolumn{3}{l}{2}         \\
+Minimum Block Size      & 32       & \multicolumn{3}{l}{16 }       \\
+Use Second Levels       & True     & \multicolumn{3}{l}{False}     \\
+Use Deferred Coalescing & False    & \multicolumn{3}{l}{True}      \\
+Block Header Length     & 32       & \multicolumn{3}{l}{0}        
+\end{tabular}
+\caption{Configuration variables for the general and optimized versions of the allocator.}
+\label{table:configuration-variables}
+\end{table}
 
 \subsection{Measuring Performance}
 
+% Explain why we are not using standardized benchmarks (becuase the use-case is narrowly scoped towards GC)
+Ideally we would want to use the allocators in a standardized benchmark suite, like DaCapo or SPECjbb, that base themselves on realistic workloads. However, again, as the use-case of the optimized version is narrowed down significantly, it does not overlap with the tests in neither of the benchmark suites. Instead, we will test the allocators on a set of tests we create ourselves, that will give an impression of the performance of the allocator. To make the tests more credible and based on realistic workloads, we will extract allocation patterns from DaCapo, meaning that realistic allocation patterns from Java programs will be used during testing.
+
+The first test that we will measure is a single allocation and free. This will give an impression of how the allocators compare in their most basic functionality. The second, and more comprehensive test, is to measure the performance of the allocators given a realistic allocation pattern.
+
 % What test cases will we consider:
-% - Single allocation/free (measured in processor cycles using rdtsc())
+% - Single allocation/free (wall clock time)
 % - A distribution of allocations (collected from dacapo)
 %   - A mix of allocations/frees, with syntentically added frees (since we cannot gather free call data from dacapo... must mention why)
+%   - This is as close to integrating to OpenJDK we can get without actually integrating.
+%   - "Vi kan lätt återskapa en allokeringshistorik men inte free-historik", möjlig felkälla.
+%
+% We have focus on these tests because...
+
+% Describe how we've extracted allocation/free patterns.
 
 % How much memory does the allocator have in its pool for the tests.
 % The pool is statically allocated and does not change in size during runtime.
+%  - And why are we doing this...
 
 \subsection{Measuring Fragmentation}
 
@@ -48,17 +57,24 @@ To measure internal fragmentation we will use a set of counter that are incremen
 \[
 \text{internal\_fragmentation} = \frac{\text{total requested bytes}}{\text{total allocated bytes}}
 \]
+\subsection{Measuring Hole Fillability}
 
-Moving on to external fragmentation, which is not as intuitively defined as the metric for internal fragmentation.
+Measuring internal fragmentation is rather straightforward and well-defined. Moving on to external fragmentation, it becomes more tricky to define a single metric that can easily be computed and compared. Instead, to gauge external fragmentation, and also to measure what the work in this thesis aims to solve, we will measure a metric we call hole fillability.
+
+Hole fillability is how well an allocator can fill available holes in a given state of the underlying memory of allocated and free blocks. This is similar to external fragmentation in the sense that hole fillability will tell us what the largest allocation that can be made is and how much memory is available to us. This will depend greatly on the size of the block headers, how much padding allocations must have and coalescing behavior, which differs between the different versions of the allocator.
 
 % Measure fragmentation:
 % - Internal fragmentation (through counters during allocations/frees)
-% - External fragmentation (SOMEHOW)
+
+% - We will skip measuring external fragmentation, becuase it is hard to define because...
+
+%Note that while integration with ZGC would provide a definitive validation of the allocator's functionality, such integration testing is excluded from the scope of this thesis, as mentioned in Section~\ref{sec:delimitations}. With this said, investigating and implementing adaptations into an allocator in itself will contribute not only to future integration, but adapting any kind of free-list based allocator for use in garbage collection or similar areas.
 
 \subsection{Machines to Collect Data}
 
 % What hardware are we collecting data on:
 % - OS, CPU (threads, cores), memory
+% - Why we have chosen this machine(s)
 
 % How are we compiling the allocator
 % - g++, optimization flags, c++ version
