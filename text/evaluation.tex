@@ -78,9 +78,28 @@ To do this, we will gather snapshots of the heap when using the allocator with t
 
 \subsection{Machines to Collect Data}
 
+Performance benchmarks have been run on a single native machine. The specifications for this machine is shown in Table~\ref{table:machine}. Each version of the allocator is compiled using GCC 11.4.0 with the C++14 (\texttt{-std=c++14}) standard using optimization level three (\texttt{-O3}).
+
+\begin{table}[H]
+\centering
+\footnotesize
+\begin{tabular}{p{1cm}p{2in}p{20mm}p{1cm}p{50pt}p{2cm}p{1cm}p{1cm}p{2cm}p{15mm}}
+Type   & \multicolumn{3}{p{1cm}}{OS}                 & Linux Kernel Version      & CPU                                      & Threads Per Core & Cores Per Socket & CPU Attached To Number Of Stockets & Memory \\
+\hline
+Native & \multicolumn{3}{p{1cm}}{Ubuntu 22.04.4 LTS} & Kernel 5.15.0-101-generic & AMD Opteron(TM) Processor 6274 @ 2.2 GHz & 2                & 8                & 2                                  & 110GB 
+\end{tabular}
+\caption{Machine used to run benchmarks.}
+\label{table:machine}
+\end{table}
+
 % What hardware are we collecting data on:
 % - OS, CPU (threads, cores), memory
 % - Why we have chosen this machine(s)
+
+% L1d:                   512 KiB (32 instances)
+% L1i:                   1 MiB (16 instances)
+% L2:                    32 MiB (16 instances)
+% L3:                    24 MiB (4 instances)
 
 % How are we compiling the allocator
 % - g++, optimization flags, c++ version
