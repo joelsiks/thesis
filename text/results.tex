@@ -1,6 +1,17 @@
 
 % Diskutera fallbacken med att vi inte har mätt external fragmentation
 
+% Please add the following required packages to your document preamble:
+\begin{table}[]
+\centering
+\begin{tabular}{@{}lllllll@{}}
+\toprule
+\multicolumn{1}{l|}{\multirow{2}{*}{Program}} & \multicolumn{2}{l|}{Reference}                         & \multicolumn{2}{l|}{General}                           & \multicolumn{2}{l}{Optimized}     \\ \cmidrule(l){2-7} 
+\multicolumn{1}{l|}{}                         & \multicolumn{1}{l|}{worst} & \multicolumn{1}{l|}{mean} & \multicolumn{1}{l|}{worst} & \multicolumn{1}{l|}{mean} & \multicolumn{1}{l|}{worst} & mean \\ \midrule
+nano                                          & 402                        & 346                       & 622                        & 548                       & 395                        & 345  \\ \bottomrule
+\end{tabular}
+\end{table}
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "main"
