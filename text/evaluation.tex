@@ -1,5 +1,11 @@
 
-When evaluating memory allocators, two primary metrics stand out: performance and memory usage, specifically fragmentation. Performance entails measuring the time required to perform allocation and/or free request, while fragmentation assesses how efficiently the allocator utilizes the memory. We will also look at something that is interesting to look at in regard to the goals of this thesis, a metric that we call ``hole fillability'', which describes how well an allocator can fill holes in a memory heap.
+When evaluating memory allocators, two primary metrics stand out: performance and memory usage, specifically fragmentation. Performance entails measuring the time required to perform allocation and/or free request, while fragmentation assesses how efficiently the allocator utilizes the memory.
+
+\subsection{Evaluation Delimitations}
+
+To reiterate, we are placing a general delimitation on this work to not integrate the allocator into ZGC, as there is simply not enough time to do so in the context of this work. Integration into ZGC would however provide a natural environment to test and evaluate several metrics of the allocator in. Given that we are not doing this, it is therefore hard to devise a way in which is descriptive enough to give clear results for those metrics.
+
+The optimized version of the allocator is tailored toward ZGC to the extent that it limits greatly the kind of allocation/free pattern that can be used on it. This makes it hard to find overlapping areas where the different version of the allocator can be fairly compared. Because of these difficulties, we have chosen to limit evaluation of the allocator to metrics that are fundamental and clear to reason about. However, this still gives room to reason about whether optimizations that have been made are reasonable or not, which is what we aim to answer in this thesis.
 
 \subsection{Allocator Configurations}
 
@@ -11,11 +17,11 @@ When evaluating memory allocators, two primary metrics stand out: performance an
 
 The three different versions of the TLSF allocator developed in this work that will be evaluated and compared in this section are: the reference TLSF implementation, the general version and the optimized version for ZGC. 
 
-Given that the optimized allocator is adapted specifically for ZGC, its use-cases are such that it is not straightforward to compare it against the other versions. To get around this, we will look at test-cases where the use-case for the optimized version overlap with the other two allocators. 
+%Given that the optimized allocator is adapted specifically for ZGC, its use-cases are such that it is not straightforward to compare it against the other versions. To get around this, we will look at test-cases where the use-case for the optimized version overlap with the other two allocators. 
 
-Testing this way is indeed not comprehensive and exhaustive. However, reiterating the goals for this thesis, which is to find out whether it is reasonable to adapt an allocator for use in ZGC and what challenges it presents, limiting the scope of the testing is also reasonable. Further and more comprehensive testing and evaluation will not be considered in this work, partly due to time constraints, but mainly due to it not being the primary focus of this thesis. The goal of evaluating the work in this thesis is to give some metric at which to reason about the work done here and is meant as a guide to developing this work further.
+%Testing this way is indeed not comprehensive and exhaustive. However, reiterating the goals for this thesis, which is to find out whether it is reasonable to adapt an allocator for use in ZGC and what challenges it presents, limiting the scope of the testing is also reasonable. Further and more comprehensive testing and evaluation will not be considered in this work, partly due to time constraints, but mainly due to it not being the primary focus of this thesis. The goal of evaluating the work in this thesis is to give some metric at which to reason about the work done here and is meant as a guide to developing this work further.
 
-The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
+%The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
 
 \begin{table}[H]
 \centering
@@ -35,10 +41,14 @@ Block Header Length     & 32       & \multicolumn{3}{l}{0}
 
 \subsection{Measuring Performance}
 
-% Explain why we are not using standardized benchmarks (becuase the use-case is narrowly scoped towards GC)
-Ideally we would want to use the allocators in a standardized benchmark suite, like DaCapo or SPECjbb, that base themselves on realistic workloads. However, again, as the use-case of the optimized version is narrowed down significantly, it does not overlap with the tests in neither of the benchmark suites, or any other that we know about. Instead, we will test the allocators on a set of tests we create ourselves, that will give an impression of the performance of the allocator. To make the tests more credible and based on realistic workloads, we will extract allocation and free patterns from the real-world Linux utility programs: X, Y and Z. Extracting and using allocation and free patterns this way we feel give a fairer workload rather than generating a synthetic pattern, which gives the testing data at least some credibility.
+To measure performance we will look at the number of processor cycles it takes to perform an allocation of the same size on all three versions of the allocator. This is reasonable to measure as it will tell us how the adaptations that have been made to the optimized versions affect its performance when doing its most fundamental operation: allocating memory. Processor cycles will be measured using the x86 instruction \texttt{rdtsc} 1000 times to give an average number of cycles for performing the allocation. 
 
-The first test that we will measure is a single allocation and free. This will give an impression of how the allocators compare in their most basic functionality. The second will be a comprehensive test using the extracting allocation patterns. To get as accurate results as possible from these tests, we will run them multiple times and report an average as well as worst result.
+Since the design of TLSF is such that it sets an upper bound on the number of instructions required to allocate memory, it is not necessary to measure allocation of multiple different sizes. Instead, we will only measure allocation of a single size, 1024 bytes.
+
+% Explain why we are not using standardized benchmarks (becuase the use-case is narrowly scoped towards GC)
+% Ideally we would want to use the allocators in a standardized benchmark suite, like DaCapo or SPECjbb, that base themselves on realistic workloads. However, again, as the use-case of the optimized version is narrowed down significantly, it does not overlap with the tests in neither of the benchmark suites, or any other that we know about. Instead, we will test the allocators on a set of tests we create ourselves, that will give an impression of the performance of the allocator. To make the tests more credible and based on realistic workloads, we will extract allocation and free patterns from the real-world Linux utility programs: X, Y and Z. Extracting and using allocation and free patterns this way we feel give a fairer workload rather than generating a synthetic pattern, which gives the testing data at least some credibility.
+
+%The first test that we will measure is a single allocation and free. This will give an impression of how the allocators compare in their most basic functionality. The second will be a comprehensive test using the extracting allocation patterns. To get as accurate results as possible from these tests, we will run them multiple times and report an average as well as worst result.
 
 % What test cases will we consider:
 % - Single allocation/free (wall clock time)
@@ -57,17 +67,22 @@ The first test that we will measure is a single allocation and free. This will g
 
 \subsection{Measuring Fragmentation}
 
-To measure internal fragmentation we will use a set of counter that are incremented and decremented during allocations and frees respectively. For each call to allocate, the number of bytes the user has requested along with the actual amount of memory used by the heap is recorded. Conversely, when a user frees a piece of memory, the corresponding amount of requested bytes and actual memory used are subtracted from their respective counters. With the two counters at hand, the internal fragmentation can be calculated as a percentage of the memory that is used as follows:
-\[
-\text{internal\_fragmentation} = \frac{\text{total requested bytes}}{\text{total allocated bytes}}
-\]
-\subsection{Measuring Hole Fillability}
+When reasoning about internal fragmentation in the different versions of the allocator we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. We will not consider the latter as it depends greatly on the specific pattern of allocation/free requests, and will instead be left as future work when integrating the allocator into ZGC. Instead, we will focus on measuring wasted space due to BlockHeader overhead.
 
-Measuring internal fragmentation is rather straightforward and well-defined. External fragmentation is however more tricky to define in a single metric that can easily be computed and compared. Instead, to gauge external fragmentation, and also to measure directly what this thesis aims to solve, we will measure a metric we call hole fillability.
+Wasted space due to block header overhead is something that is statically different between the three different versions of the allocators, as they all have different sizes for their respective header. Following this, we will consider the best and worst case for using any version of the allocator. First, the case where the heap is filled with a single block, requiring only one header. And secondly, the case when the heap is filled with as many blocks as possible of the smallest size, maximizing the number of block header required.
 
-Hole fillability is how well an allocator can fill available holes in a given state of the underlying memory of allocated and free blocks. This is similar to external fragmentation in the sense that hole fillability will tell us what the largest allocation that can be made is and how much memory is available to us. This will depend greatly on the size of the block headers, how much padding allocations must have and coalescing behavior, which differs between the different versions of the allocator.
+Looking at these two metrics will give us a range in where the wasted space due to block header will fall between, which will tell us how much memory each version of the allocator are potentially wasting for this purpose. To make the measurements reasonable for all versions of the allocator, the heap size will be set to 2MB to align with the requirements of the optimized version.
 
-To do this, we will gather snapshots of the heap when using the allocator with the allocation and free patterns collected for measuring performance. The snapshots will be randomly selected and each version of the allocator will be compared on the same snapshot to see how well they are able to fit new data inside holes in the heap.
+%To measure internal fragmentation we will use a set of counter that are incremented and decremented during allocations and frees respectively. For each call to allocate, the number of bytes the user has requested along with the actual amount of memory used by the heap is recorded. Conversely, when a user frees a piece of memory, the corresponding amount of requested bytes and actual memory used are subtracted from their respective counters. With the two counters at hand, the internal fragmentation can be calculated as a percentage of the memory that is used as follows:
+%\[ \text{internal\_fragmentation} = \frac{\text{total requested bytes}}{\text{total allocated bytes}} \]
+
+%\subsection{Measuring Hole Fillability}
+
+%Measuring internal fragmentation is rather straightforward and well-defined. External fragmentation is however more tricky to define in a single metric that can easily be computed and compared. Instead, to gauge external fragmentation, and also to measure directly what this thesis aims to solve, we will measure a metric we call hole fillability.
+
+%Hole fillability is how well an allocator can fill available holes in a given state of the underlying memory of allocated and free blocks. This is similar to external fragmentation in the sense that hole fillability will tell us what the largest allocation that can be made is and how much memory is available to us. This will depend greatly on the size of the block headers, how much padding allocations must have and coalescing behavior, which differs between the different versions of the allocator.
+
+%To do this, we will gather snapshots of the heap when using the allocator with the allocation and free patterns collected for measuring performance. The snapshots will be randomly selected and each version of the allocator will be compared on the same snapshot to see how well they are able to fit new data inside holes in the heap.
 
 % Measure fragmentation:
 % - Internal fragmentation (through counters during allocations/frees)
@@ -78,7 +93,7 @@ To do this, we will gather snapshots of the heap when using the allocator with t
 
 \subsection{Machines to Collect Data}
 
-Performance benchmarks have been run on a single native machine. The specifications for this machine is shown in Table~\ref{table:machine}. Each version of the allocator is compiled using GCC 11.4.0 with the C++14 (\texttt{-std=c++14}) standard using optimization level three (\texttt{-O3}).
+Performance benchmarks have been run on a single native machine. The specifications for this machine is shown in Table~\ref{table:machine}. Each version of the allocator is compiled using GCC 11.4.0 with the C++14 (\texttt{-std=c++14}) standard using optimization level three (\texttt{-O2}).
 
 \begin{table}[H]
 \centering

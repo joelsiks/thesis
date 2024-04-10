@@ -1,6 +1,28 @@
 
+% Memory allocation in Java programs
+%  - Not use more memory than necessary
+%  - No stalls
+%  - Performance & scalability
 
-% How do we know if we've reached our goal.
+Memory management is an important aspect of modern software development, particularly in Java applications where dynamic memory allocation and garbage collection plays a central role. Java automatically manages memory through garbage collection, which allocates and frees memory without intervention by the programmer, allowing for more productive and robust software development. However, this convenience can be challenging to realize efficiently, especially concerning performance and scalability.
+
+Within the Java ecosystem, OpenJDK (Open Java Development Kit) is the most popular Java Virtual Machine (JVM). One of the most important parts of the OpenJDK is its set of garbage collectors,
+
+One of the most important components of OpenJDK is its garbage collectors
+
+Within the Java ecosystem, the OpenJDK (Open Java Development Kit) stands as a cornerstone, providing an open-source implementation of the Java Platform, Standard Edition (Java SE). One of the critical components of the OpenJDK is its garbage collection mechanism, which manages the allocation and deallocation of memory dynamically during runtime. In recent years, as the demand for high-throughput and low-latency applications has increased, there has been a growing need for more efficient garbage collection strategies.
+
+
+% ZGC
+%  - Selling points of ZGC
+%  - Bump pointer (fast)
+
+% Motivate the drawbacks of bump-pointer
+%  - We solve this with free-list, yes
+
+% What and how will we do allocation, yes
+
+% How do we contribute to the reserach space
 
 %%% Local Variables:
 %%% mode: latex
