@@ -20,7 +20,7 @@ where $f$ and $s$ are the first- and second-level indexes respectively. Addition
     \label{fig:bitmap_flattening}
 \end{figure}
 
-The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, the adaptation now more efficiently determines the relevant free-list by looking in the single bitmap, not two bitmaps as in the original design.
+The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, the adaptation now more efficiently determines the relevant free-list by looking in the single bitmap, not two bitmaps as in the original design. Additionally, the most granularity in size-ranges for the free-lists are found for the smallest allocation sizes, which aligns well with most allocations being small inside Java. This means that less memory will potentially be wasted and less splitting done, which saves performance.
 
 \begin{figure}[H]
     \centering
