@@ -2,25 +2,19 @@
 % I want to describe that even though allocators have been designed about for a long time, the problem is still not solved.
 % Perhaps quote the TLSF paper?
 
-A commonly used allocator is dlmalloc~\cite{dlmalloc}, named after and created by Doug Lea. dlmalloc stands out in that it uses different policies to choose blocks depending on the size of the allocation request. In comparison to TLSF, which uses the previously described ``good-fit'' policy, dlmalloc uses four different policies: first-fit, cached blocks, segregated-fits and OS allocation. The approach of using multiple policies aims to provide the best average performance for all different allocation sizes. However, the worst-case response time is usually high or hard to define when not applying the same policy for all allocation sizes.
+DLmalloc~\cite{dlmalloc}, named after its creator Doug Lea, is one of the most cited and widely used memory allocators. It stands out for its use of different policies to select blocks based on the size of the allocation request. In contrast to TLSF, which employs the previously described 'good-fit' policy, DLmalloc utilizes four distinct policies: first-fit, cached blocks, segregated-fits, and OS allocation. This approach aims to optimize average performance across various allocation sizes. However, it often leads to higher worst-case response times or difficulty in defining them compared to TLSF's uniform policy for all allocation sizes.
 
-In the TLSF paper by M. Masmano et al.~\cite{TLSF}, an experimental analysis is made that compares performance of different allocators, most importantly TLSF and dlmalloc, in terms of processor cycles. The results show that dlmalloc often performs best, and better than TLSF in multiple scenarios. However, in its worst case, dlmalloc has terrible performance compared to other allocators. TLSF on the other hand performs more or less the same regardless of allocation size, making it highly predictable, as is its main selling point.
+DLmalloc is considered a general-purpose allocator, meaning it is tailored to work in any kind of environment. However, a common recommendation~\cite{custom_rec_1, custom_rec_2} to improve performance is to take advantage of application-specific knowledge to manage memory more efficiently through customizing an existing allocator. This is done in commonly used applications such as the Apache web server and the GCC compiler. In relation to this, R. Jones et al.~\cite{gchandbook} discuss that in the context of garbage collection, customizing allocators for use in a GC have a desirable impact on both performance and memory usage. Much like taking advantage of application-specific knowledge, a memory allocator for a GC might utilize GC-specific behavior to its advantage to achieve these desired effects.
+
+\newpage
+
+% D. A. Barret and B. G. Zorn~\cite{lifetime_predictors_memalloc} explores the possibility of have performed a study that aims to understand and utilize the context in which an allocator is used in and optimize it to improve memory usage, similarly to the spirit of what is done in this thesis. They analyzed what kind of changes are often done to general-purpose allocators and concluded that the most common optimization is to tailor the allocator to the specific programs specific allocation distribution. From this they have applied an algorithm that tries to predict the lifetime of object with varying success that more often than not reduces memory overhead and sometimes even increases CPU performance by treating different lifetimes differently.
+
+% In the TLSF paper by M. Masmano et al.~\cite{TLSF}, an experimental analysis is made that compares performance of different allocators, most importantly TLSF and dlmalloc, in terms of processor cycles. The results show that dlmalloc often performs best, and better than TLSF in multiple scenarios. However, in its worst case, dlmalloc has terrible performance compared to other allocators. TLSF on the other hand performs more or less the same regardless of allocation size, making it highly predictable, as is its main selling point.
 
 % Both dlmalloc and TLSF are considered general-purpose allocators in the sense that they do not tailor to any specific use-case, but rather try to perform the best for most use-cases. On the other hand you have custom allocators, those that aim to 
 
 % Both dlmalloc and TLSF are considered general-purpose allocators in the sense that they aim to have good performance for most programs using them. What makes them general-purpose is that they lack prior knowledge of the allocation pattern of a program and must therefore account for any pattern. Instead, what programmers frequently do is to write their own custom allocator for their specific program, since they have knowledge about it that a general-purpose allocator does not. A common pattern is to optimize for a specific allocation distribution, which is unique to a specific program. D. A. Barret and B. G. Zorn~\cite{lifetime_predictors_memalloc} 
-
-\newpage
-
-% Skriva om var jag hittar resten av related work.
-
-D. A. Barret and B. G. Zorn~\cite{lifetime_predictors_memalloc} have performed a study that aims to understand and utilize the context in which an allocator is used in and optimize it to improve memory usage, similarly to the spirit of what is done in this thesis. 
-
-They analyzed what kind of changes are often done to general-purpose allocators and concluded that the most common optimization is to tailor the allocator to the specific programs specific allocation distribution. 
-
-From this they have applied an algorithm that tries to predict the lifetime of object with varying success that more often than not reduces memory overhead and sometimes even increases CPU performance by treating different lifetimes differently.
-
-% This is similar to what this thesis aims to do: adapt an alloctaor to be used in a specific garbage collector.
 
 %%% Local Variables:
 %%% mode: latex

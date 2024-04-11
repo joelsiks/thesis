@@ -1,5 +1,5 @@
 
-When evaluating memory allocators, two primary metrics stand out: performance and memory usage, specifically fragmentation. Performance entails measuring the time required to perform allocation and/or free request, while fragmentation assesses how efficiently the allocator utilizes the memory.
+When evaluating memory allocators, two primary metrics stand out: performance and memory usage, specifically fragmentation. Performance entails measuring the duration it takes to perform certain operations, while fragmentation assesses how efficiently the allocator utilizes the available memory.
 
 \subsection{Evaluation Delimitations}
 
@@ -17,11 +17,9 @@ The optimized version of the allocator is tailored toward ZGC to the extent that
 
 The three different versions of the TLSF allocator developed in this work that will be evaluated and compared in this section are: the reference TLSF implementation, the general version and the optimized version for ZGC. 
 
-%Given that the optimized allocator is adapted specifically for ZGC, its use-cases are such that it is not straightforward to compare it against the other versions. To get around this, we will look at test-cases where the use-case for the optimized version overlap with the other two allocators. 
-
 %Testing this way is indeed not comprehensive and exhaustive. However, reiterating the goals for this thesis, which is to find out whether it is reasonable to adapt an allocator for use in ZGC and what challenges it presents, limiting the scope of the testing is also reasonable. Further and more comprehensive testing and evaluation will not be considered in this work, partly due to time constraints, but mainly due to it not being the primary focus of this thesis. The goal of evaluating the work in this thesis is to give some metric at which to reason about the work done here and is meant as a guide to developing this work further.
 
-%The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
+The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
 
 \begin{table}[H]
 \centering
@@ -65,13 +63,28 @@ Since the design of TLSF is such that it sets an upper bound on the number of in
 % The pool is statically allocated and does not change in size during runtime.
 %  - And why are we doing this...
 
+\newpage
 \subsection{Measuring Fragmentation}
 
-When reasoning about internal fragmentation in the different versions of the allocator we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. We will not consider the latter as it depends greatly on the specific pattern of allocation/free requests, and will instead be left as future work when integrating the allocator into ZGC. Instead, we will focus on measuring wasted space due to BlockHeader overhead.
+When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze different allocation cases for the three different versions of the allocator.
 
-Wasted space due to block header overhead is something that is statically different between the three different versions of the allocators, as they all have different sizes for their respective header. Following this, we will consider the best and worst case for using any version of the allocator. First, the case where the heap is filled with a single block, requiring only one header. And secondly, the case when the heap is filled with as many blocks as possible of the smallest size, maximizing the number of block header required.
+To make the analysis suited toward ZGC, we will place limitations on the allocators/heap that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, we will align allocations to 8 bytes to fairly compare the allocators.
 
-Looking at these two metrics will give us a range in where the wasted space due to block header will fall between, which will tell us how much memory each version of the allocator are potentially wasting for this purpose. To make the measurements reasonable for all versions of the allocator, the heap size will be set to 2MB to align with the requirements of the optimized version.
+The two cases we will examine are: (1) the worst-case for all allocators, where there is maximum padding due to alignment, and (2) the best-case for all allocators, where there is no padding necessary due to alignment. For both cases we will allocate the smallest possible size to fulfill the goals and fill the heap with as many blocks of that size as possible. Keeping the smallest possible allocation size in mind, 17 bytes and 16 bytes will be allocated for the first and second case respectively.
+
+Calculating internal fragmentation will be done in the following way, where the total allocation consists of block header, allocation and padding. num\_blocks is round down to the nearest integer since cannot create a fraction of a block.
+
+\begin{align}
+    \text{waste} &= \text{block\_header} + \text{padding} \\
+    \text{num\_blocks} &= \frac{2097152}{\text{block\_header + allocation + padding}} \\
+    \text{internal\_fragmentation} &= \frac{\text{num\_blocks} \cdot \text{waste}}{2097152}
+\end{align}
+
+From looking at the sizes of the block headers, it is straightforward to conclude which allocator uses less memory overall since smaller header would mean less memory used overall when allocating the same size. However, the goal of fragmentation evaluation is to see how much memory could theoretically be wasted when using different versions of the allocator, which also includes padding.
+
+% Wasted space due to block header overhead is something that is statically different between the three different versions of the allocators, as they all have different sizes for their respective header. Following this, we will consider the best and worst case for using any version of the allocator. First, the case where the heap is filled with a single block, requiring only one header. And secondly, the case when the heap is filled with as many blocks as possible of the smallest size, maximizing the number of block header required.
+
+% Looking at these two metrics will give us a range in where the wasted space due to block header will fall between, which will tell us how much memory each version of the allocator are potentially wasting for this purpose. To make the measurements reasonable for all versions of the allocator, the heap size will be set to 2MB to align with the requirements of the optimized version.
 
 %To measure internal fragmentation we will use a set of counter that are incremented and decremented during allocations and frees respectively. For each call to allocate, the number of bytes the user has requested along with the actual amount of memory used by the heap is recorded. Conversely, when a user frees a piece of memory, the corresponding amount of requested bytes and actual memory used are subtracted from their respective counters. With the two counters at hand, the internal fragmentation can be calculated as a percentage of the memory that is used as follows:
 %\[ \text{internal\_fragmentation} = \frac{\text{total requested bytes}}{\text{total allocated bytes}} \]
