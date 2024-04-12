@@ -66,13 +66,11 @@ Since the design of TLSF is such that it sets an upper bound on the number of in
 \newpage
 \subsection{Measuring Fragmentation}
 
-When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze different allocation cases for the three different versions of the allocator.
+When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze the worst-case of fragmentation for all versions of the allocator. To make the analysis suited toward ZGC, we place limitations on the allocators that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, we will align allocations to 8 bytes on all allocators to fairly compare them.
 
-To make the analysis suited toward ZGC, we will place limitations on the allocators/heap that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, we will align allocations to 8 bytes to fairly compare the allocators.
+We will examine two worst-cases: (1) when maximum space is wasted due to both block header and padding, and (2) when maximum space is wasted only due to block header. For both of these cases, the smallest possible size will be allocated to fill the heap with as many blocks as possible. Keeping the smallest allocation size of ZGC small pages in mind, 17 bytes and 16 bytes will be allocated in the first and second case respectively, since 17 bytes requires maximum padding and 16 bytes require no padding.
 
-The two cases we will examine are: (1) the worst-case for all allocators, where there is maximum padding due to alignment, and (2) the best-case for all allocators, where there is no padding necessary due to alignment. For both cases we will allocate the smallest possible size to fulfill the goals and fill the heap with as many blocks of that size as possible. Keeping the smallest possible allocation size in mind, 17 bytes and 16 bytes will be allocated for the first and second case respectively.
-
-Calculating internal fragmentation will be done in the following way, where the total allocation consists of block header, allocation and padding. num\_blocks is round down to the nearest integer since cannot create a fraction of a block.
+Internal fragmentation is calculated in the following way, where the total allocation consists of block header, allocation and padding. num\_blocks is round down to the nearest integer since a fraction of a block cannot be created.
 
 \begin{align}
     \text{waste} &= \text{block\_header} + \text{padding} \\
@@ -80,7 +78,7 @@ Calculating internal fragmentation will be done in the following way, where the 
     \text{internal\_fragmentation} &= \frac{\text{num\_blocks} \cdot \text{waste}}{2097152}
 \end{align}
 
-From looking at the sizes of the block headers, it is straightforward to conclude which allocator uses less memory overall since smaller header would mean less memory used overall when allocating the same size. However, the goal of fragmentation evaluation is to see how much memory could theoretically be wasted when using different versions of the allocator, which also includes padding.
+From looking at the sizes of the block headers, it is straightforward to conclude which allocator uses less memory overall since smaller header would mean less memory used overall when allocating the same size. However, the goal of this evaluation is to see how much memory could theoretically be wasted when using different versions of the allocator, which also includes padding. The final results will give us a range of worst-case memory wastage, which will vary depending on the amount of padding that is applied. We recognize that when using the allocator in practice it will most likely never reach this calculated worst-case. However, the results will provide an upper-bound that can be used to reason about the effectiveness of the allocator.
 
 % Wasted space due to block header overhead is something that is statically different between the three different versions of the allocators, as they all have different sizes for their respective header. Following this, we will consider the best and worst case for using any version of the allocator. First, the case where the heap is filled with a single block, requiring only one header. And secondly, the case when the heap is filled with as many blocks as possible of the smallest size, maximizing the number of block header required.
 
