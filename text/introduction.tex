@@ -4,24 +4,24 @@
 %  - No stalls
 %  - Performance & scalability
 
-Memory management is an important aspect of modern software development, particularly in Java applications where dynamic memory allocation and garbage collection plays a central role. Java automatically manages memory through garbage collection, which allocates and frees memory without intervention by the programmer, allowing for more productive and robust software development. However, this convenience can be challenging to realize efficiently, especially concerning performance and scalability.
-
-Within the Java ecosystem, OpenJDK (Open Java Development Kit) is the most popular Java Virtual Machine (JVM). One of the most important parts of the OpenJDK is its set of garbage collectors,
-
-One of the most important components of OpenJDK is its garbage collectors
-
-Within the Java ecosystem, the OpenJDK (Open Java Development Kit) stands as a cornerstone, providing an open-source implementation of the Java Platform, Standard Edition (Java SE). One of the critical components of the OpenJDK is its garbage collection mechanism, which manages the allocation and deallocation of memory dynamically during runtime. In recent years, as the demand for high-throughput and low-latency applications has increased, there has been a growing need for more efficient garbage collection strategies.
-
+Memory management is an important aspect of modern software development, particularly in Java applications where dynamic memory allocation and garbage collection plays a central role. Java automatically manages memory through garbage collection, which allocates and frees memory without intervention by the programmer, allowing for more productive and robust software development. However, this convenience can be challenging to realize efficiently, especially concerning performance and scalability. In the Open Java Development Kit (OpenJDK), the Java Virtual Machine (JVM) provides a set of garbage collectors, one of which is the Z garbage collector (ZGC). ZGC performs all its work concurrently, without stopping the application for more than 10ms.
 
 % ZGC
 %  - Selling points of ZGC
 %  - Bump pointer (fast)
-
 % Motivate the drawbacks of bump-pointer
 %  - We solve this with free-list, yes
+ZGC divides the memory into pages that operate independently. Memory is then allocated sequentially on a per-page basis, using a method called bump-pointer allocation, primarily due to its simplicity and speed. However, the most notable downside of bump-pointer allocation is its inability to allocate anywhere on a page. Making it hard to reuse memory that has already been allocated without moving all living objects away to another page. An alternative method is to use a free-list based allocation method that is able to keep track of where memory can be allocated on a per-page level.
+
+% Free-lists makes it possible to allocate memory anywhere on a page - without moving everything to another page, perhaps as often as one would using bump-pointer allocation.
+
+The goal of this project is to assess whether it is reasonable to utilize a free-list-based allocator to mitigate intra-page fragmentation within a garbage collector and how one would go about doing this. While many garbage collectors rely on bump-pointer allocation for its fast allocation and deallocation capabilities, it comes with limitations. Notably, bump-pointer allocation restricts allocation to a fixed location indicated by the top-pointer, whereas a free-list-based allocator offers greater flexibility by enabling object allocation anywhere within a page.
+
+This inherent inflexibility of bump-pointer allocation may contribute to increased intra-page fragmentation, as objects are allocated strictly at the top of available memory, potentially leaving unused space within the page. In contrast, a free-list-based allocator can distribute objects more efficiently throughout the page, thereby reducing fragmentation and maximizing memory utilization.
+
+There are cases where free-lists have been used in the context of garbage collection to allocate memory, but not to the extent of using it inside something similar to ZGC pages. More on this later in the report. This work intends to contribute to the research space by providing insight into what challenges and opportunities there are when using a traditional memory allocator in the context of garbage collection.
 
 % What and how will we do allocation, yes
-
 % How do we contribute to the reserach space
 
 %%% Local Variables:

@@ -3,11 +3,10 @@
 
 The block header for the different versions are: 32 bytes, of which 16 bytes can be used by allocated blocks for the reference version; 32 bytes for the general version; and 0 bytes for the optimized version. 
 
-If aligning allocation requests to 8 bytes for all allocators, the worst case is to allocate the smallest possible size and add one byte, i.e 17 bytes. Allocating 17-bytes means padding the allocation request to 24 bytes, essentially wasting 7 bytes of memory, whilst making the block header associated with the request take up a large amount of space relative to the request.
+In the worst case with maximum padding necessary, the reference version will waste up to 57.5\%, general version 69.6\% and the optimized version 29.2\%, if filling the heap with as many allocations as possible of 17 bytes. Looking at the second case where there is no padding necessary for alignment, the reference version will waste up to 50\%, general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
 
-In the worst case, the reference version will waste up to 57.5\%, general version 69.6\% and the optimized version 29.2\%, if filling the heap with as many allocations as possible of 17 bytes.
+To summarize, when filling the heap with as small allocations as possible and considering the size of the block header and any necessary padding due to alignment, the reference version will waste 50\%-57.5\%, general version 66\%-69.6\% and the reference version 0\%-29.2\%.
 
-Looking at the best case instead, where there is no padding necessary for alignment, the reference version will waste up to 50\%, general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
 
 % Worst case for reference is when the blockheader + alignment is maximum.
 
