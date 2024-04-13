@@ -1,4 +1,10 @@
 
+\subsection{Concurrency Implications}
+
+One of the main selling points of TLSF is its bounded worst-case performance, which makes it an attractive choice in real-time systems where long response times are undesirable. The TLSF algorithm is able to achieve this because it has no loops in its design. However, when introducing concurrency using a lock-free mechanism, as described in Section~\ref{sec:adaptations_impl:concurrency}, this is no longer the case. The lock-free implementation of the free-lists in the optimized version requires adding a loop to make sure that the CAS instruction eventually succeeds. Not adding this loop means an allocation may fail if preempted by another thread during allocation. Thus, for concurrent use-cases, the worst-case performance of the optimized allocator is not bounded. However, for single-threaded use-cases, the worst-case is still bounded, as indicated by the results in Section~\ref{sec:allocation-performance}.
+
+The trade-off of adding concurrency at the cost of removing the bounded worst-case performance 
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "main"
