@@ -63,7 +63,6 @@ Since the design of TLSF is such that it sets an upper bound on the number of in
 % The pool is statically allocated and does not change in size during runtime.
 %  - And why are we doing this...
 
-\newpage
 \subsection{Measuring Fragmentation}
 
 When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze the worst-case of fragmentation for all versions of the allocator. To make the analysis suited toward ZGC, we place limitations on the allocators that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, we will align allocations to 8 bytes on all allocators to fairly compare them.
@@ -102,7 +101,7 @@ From looking at the sizes of the block headers, it is straightforward to conclud
 
 %Note that while integration with ZGC would provide a definitive validation of the allocator's functionality, such integration testing is excluded from the scope of this thesis, as mentioned in Section~\ref{sec:delimitations}. With this said, investigating and implementing adaptations into an allocator in itself will contribute not only to future integration, but adapting any kind of free-list based allocator for use in garbage collection or similar areas.
 
-\subsection{Machines to Collect Data}
+\subsection{Machine to Collect Data}
 
 Performance benchmarks have been run on a single native machine. The specifications for this machine is shown in Table~\ref{table:machine}. Each version of the allocator is compiled using GCC 11.4.0 with the C++14 (\texttt{-std=c++14}) standard using optimization level three (\texttt{-O2}).
 

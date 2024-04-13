@@ -7,7 +7,7 @@ The reference version of the allocator has been abstracted into a base class nam
 
 \subsection{New Bitmap Design}
 
-Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_range} regarding the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``Two Level'' from Two Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The new bitmap is indexed using the formula: 
+Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_range} regarding the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``two-level'' from Two-Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The new bitmap is indexed using the formula: 
 \[
     \text{bitmap\_index($f, s$)} = f \cdot 4 + s
 \]
@@ -20,7 +20,7 @@ where $f$ and $s$ are the first- and second-level indexes respectively. Addition
     \label{fig:bitmap_flattening}
 \end{figure}
 
-The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, the adaptation now more efficiently determines the relevant free-list by looking in the single bitmap, not two bitmaps as in the original design. Additionally, the most granularity in size-ranges for the free-lists are found for the smallest allocation sizes, which aligns well with most allocations being small inside Java. This means that less memory will potentially be wasted and less splitting done, which saves performance.
+The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, with the flattened adaptation, the relevant free-list is more efficiently determined by looking in a single bitmap, not two bitmaps as in the original design. Additionally, the most granularity in size-ranges for the free-lists are found for the smallest allocation sizes, which aligns well with most allocations being small inside Java. This means that less memory will potentially be wasted and less splitting done, which saves performance.
 
 \begin{figure}[H]
     \centering
@@ -32,7 +32,7 @@ The correlation between the bitmap and the free-lists is depicted in Figure~\ref
 \subsection{Block Header Adjustments and 0-byte Header}
 \label{sec:adaptations_impl:0-byte-header}
 
-The block header, as designed in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, and unused for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer this way allows us to have the block header for optimized blocks, as shown in Figure~\ref{fig:blockheader_adap_optimized}, while using the same block header definition as the general version. 
+The block header, as designed in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, and unused for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer to be the last field in the header, as shown in Figure~\ref{fig:blockheader_adap_optimized}, makes it possible to have the same definition for the general and optimized version, while the optimized version only uses the first 16 bytes of it.
 
 \begin{figure}[H]
     \centering
@@ -60,7 +60,11 @@ The block header, as designed in the reference implementation, is shown in Figur
     \label{fig:blockheader_adaptations}
 \end{figure}
 
-As stated in Section~\ref{sec:adaptations:block-header-adjustments}, the size field can be ignored for allocated blocks if the user of the allocator keeps track of its size somewhere else and provides that information upon calling \texttt{free()}. Additionally, to further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each. Both the size and next/prev pointers fields are unused for allocated blocks and stored in the unused parts for free blocks. In the optimized version, this results in the header taking up 0 bytes for allocated blocks, hence the name \textit{0-byte header}, and 16 bytes for free blocks.
+As stated in Section~\ref{sec:adaptations:block-header-adjustments}, the size field can be ignored for allocated blocks if the block size is kept track of somewhere else and is provided upon calling \texttt{free()}. The benefit of doing this is that more memory is available for object allocation inside ZGC pages. Consequently, this means that the size must be fetched and perhaps computed from elsewhere, adding extra operations which might decrease performance. 
+
+Additionally, to further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each. The conversion to and from offsets and pointers does mean adding extra operations as well, which might decrease performance further. Both the size and next/prev fields are unused for allocated blocks and stored in the unused parts for free blocks. In the optimized version, this results in the header taking up 0 bytes for allocated blocks, hence the name \textit{0-byte header}, and 16 bytes for free blocks.
+
+In summary however, the increase of available memory when applying the block header optimization at the cost of potentially decreased performance, is most likely a trade-off worth making. This effect is further amplified when most allocations are small, which results in the size of the block header taking up proportionally more memory. However, this has to be further evaluated to draw conclusions, but in this case we optimize for potential memory efficiency over performance.
 
 \subsection{Concurrency Implementation}
 \label{sec:adaptations_impl:concurrency}
@@ -82,7 +86,7 @@ To be able to operate on the free-list concurrently without locks, we will use t
 
 A strategy for solving the ABA problems is ensuring that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, inside the allocators, pointers to blocks are not unique and can be inserted and removed any number of times. A way around this is to apply a so-called version tag to each pointer, which allow us to uniquely identify pointers by their version.
 
-Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, it is stated that due to how compare-and-swap (CAS) (\texttt{compare\_exchange()} in C++) work, it is desirable to store the pointer and version tag in a single word, i.e 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. Making this conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
+Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, due to how compare-and-swap (CAS) (\texttt{compare\_exchange()} in C++) work, it is desirable to store the pointer and version tag in a single word, i.e. 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. This conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
 
 \begin{figure}[H]
     \centering
@@ -148,6 +152,12 @@ If the \texttt{compare\_exchange()} operation fails when removing a block, there
 \label{algorithm:concurrent_remove_block}
 \caption{Concurrent removal of the head of a free-list.}
 \end{algorithm}
+
+\subsection{Potential Drawbacks}
+
+One of the main selling points of TLSF is its bounded worst-case performance, which makes it an attractive choice in real-time systems where long response times are undesirable. The TLSF algorithm is able to achieve this because it has no loops in its design. However, when introducing concurrency using a lock-free mechanism, as described in Section~\ref{sec:adaptations_impl:concurrency}, this is no longer the case. The lock-free implementation of the free-lists in the optimized version requires adding a loop to make sure that the CAS instruction eventually succeeds. Not adding this loop means an allocation may fail if preempted by another thread during allocation. Thus, for concurrent use-cases, the worst-case performance of the optimized allocator is not bounded. However, for single-threaded use-cases, the worst-case is still bounded, as indicated by the results in Section~\ref{sec:allocation-performance}.
+
+The trade-off of adding concurrency at the cost of removing the bounded worst-case performance 
 
 %%% Local Variables:
 %%% mode: latex
