@@ -1,4 +1,13 @@
 
+\subsection{Allocation Performance}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/allocation_performance.png}
+    \caption{Allocation performance when allocating 64 bytes on the different versions of the allocator when there is (1) a 64 byte block and (2) a 1024 byte block present in the allocator.}
+    \label{fig:allocation_performance}
+\end{figure}
+
 \subsection{Memory efficiency}
 
 The block header for the different versions are: 32 bytes, of which 16 bytes can be used by allocated blocks for the reference version; 32 bytes for the general version; and 0 bytes for the optimized version. 
