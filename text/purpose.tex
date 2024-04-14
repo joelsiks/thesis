@@ -5,6 +5,14 @@
 
 The purpose of this work is to explore, implement and evaluate possible adaptations to an existing free-list-based allocator for use in ZGC. The findings of this work is to help in replacing bump-pointer allocation to some extent with the adapted free-list-based allocator to improve the speed and memory efficiency of ZGC. Although qualitative metrics will be used to evaluate our findings, this work will mainly be about the adaptations that are done and what challenges and opportunities present themselves.
 
+Specifically, the questions we aim to answer are:
+
+\begin{enumerate}
+    \item What are adaptations that can be made to an existing allocator to improve either performance or memory efficiency?
+    \item What are the implications of adapting an allocator for use in ZGC?
+    \item How does the chosen adaptations affect the performance and memory efficiency of the allocator?
+\end{enumerate}
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "main"
