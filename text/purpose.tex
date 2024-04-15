@@ -1,9 +1,5 @@
 
-% The goal of this project is to assess whether it is reasonable to utilize a free-list-based allocator to mitigate intra-page fragmentation within a garbage collector and how one would go about doing this. While many garbage collectors rely on bump-pointer allocation for its fast allocation and deallocation capabilities, it comes with limitations. Notably, bump-pointer allocation restricts allocation to a fixed location indicated by the top-pointer, whereas a free-list-based allocator offers greater flexibility by enabling object allocation anywhere within a page.
-
-% This inherent inflexibility of bump-pointer allocation may contribute to increased intra-page fragmentation, as objects are allocated strictly at the top of available memory, potentially leaving unused space within the page. In contrast, a free-list-based allocator can distribute objects more efficiently throughout the page, thereby reducing fragmentation and maximizing memory utilization.
-
-The purpose of this work is to explore, implement and evaluate possible adaptations to an existing free-list-based allocator for use in ZGC. The findings of this work is to facilitate a transition from bump-pointer allocation to free-list-based allocation with the goal of improving the speed and memory efficiency of ZGC. Although qualitative metrics will be used to evaluate our findings, this work will mainly be about the adaptations that are done and what challenges and opportunities present themselves.
+The purpose of this work is to explore, implement and evaluate possible adaptations to an existing free-list-based allocator for use in ZGC. The findings will help facilitate a transition from bump-pointer allocation to free-list-based allocation, with the goal of improving the speed and memory efficiency of ZGC. Although qualitative metrics will be used to evaluate our findings, this work will mainly be about the adaptations that are done and what challenges and opportunities present themselves.
 
 Specifically, the questions we seek out to answer are:
 
