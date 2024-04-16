@@ -3,21 +3,15 @@ When evaluating memory allocators, two primary metrics stand out: performance an
 
 \subsection{Evaluation Delimitations}
 
-To reiterate, we are placing a general delimitation on this work to not integrate the allocator into ZGC, as there is simply not enough time to do so in the context of this work. Integration into ZGC would however provide a natural environment to test and evaluate several metrics of the allocator in. Given that we are not doing this, it is therefore hard to devise a way in which is descriptive enough to give clear results for those metrics.
+To reiterate, we will not integrate the allocator into ZGC, as there is simply not enough time to do so in the context of this work. Integration into ZGC would provide a natural environment to test and evaluate the allocator in. Choosing not to do this makes it harder to devise ways in which is descriptive enough to give an indication of how the allocator would behave in that environment. 
 
-The optimized version of the allocator is tailored toward ZGC to the extent that it limits greatly the kind of allocation/free pattern that can be used on it. This makes it hard to find overlapping areas where the different version of the allocator can be fairly compared. Because of these difficulties, we have chosen to limit evaluation of the allocator to metrics that are fundamental and clear to reason about. However, this still gives room to reason about whether optimizations that have been made are reasonable or not, which is what we aim to answer in this thesis.
+The optimized version of the allocator is tailored toward ZGC to the extent that it limits greatly the kind of allocation and free pattern that can be used on it. This makes it hard to find overlapping areas where the different versions of the allocator can be fairly compared and to find allocation and free patterns given the limits on allocation and heap size that the optimized version has. Part of what makes this hard is that even when applying the same pattern of allocations and frees, their respective heaps would be filled differently, and at different speeds. This is mainly due to the fact that the different versions have different sizes for the block header, making them use varying amounts of memory. For example, when the general version fills its heap, the optimized version may still have some portion of unused memory available. Additionally, the optimized version does not support immediate coalescing. This affects the way that the heap is filled and makes it unclear when to perform explicit coalescing so that the same allocation requests can be fulfilled on all versions of the allocator.
+
+Because of these difficulties, we have chosen to limit evaluation of the allocator to fundamental metrics that are clear to reason about. Specifically, we will focus on performance in terms of a single allocation request and memory efficiency, which will be assessed through an analysis of worst-case scenarios. While this approach allows us to reason about the behavior of the optimized allocator in independence, it may not fully capture its performance in a production environment using ZGC. However, it will provide insight into how the adaptations affect the performance and memory efficiency of the allocator, which addresses the third research question.
 
 \subsection{Allocator Configurations}
 
-% What versions of the allocator am I testing and how can the reader repeat:
-% - Reference allocator
-% - General and optimized allocators (describe with configuration variables)
-
-% The goal is to measure relative performance between the different versions.
-
 The three different versions of the TLSF allocator developed in this work that will be evaluated and compared in this section are: the reference TLSF implementation, the general version and the optimized version for ZGC. 
-
-%Testing this way is indeed not comprehensive and exhaustive. However, reiterating the goals for this thesis, which is to find out whether it is reasonable to adapt an allocator for use in ZGC and what challenges it presents, limiting the scope of the testing is also reasonable. Further and more comprehensive testing and evaluation will not be considered in this work, partly due to time constraints, but mainly due to it not being the primary focus of this thesis. The goal of evaluating the work in this thesis is to give some metric at which to reason about the work done here and is meant as a guide to developing this work further.
 
 The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
 
@@ -39,33 +33,15 @@ Block Header Length     & 32       & \multicolumn{3}{l}{0}
 
 \subsection{Measuring Performance}
 
-To measure performance we will look at the number of processor cycles it takes to perform an allocation of the same size on all three versions of the allocator. This is reasonable to measure as it will tell us how the adaptations that have been made to the optimized versions affect its performance when doing its most fundamental operation: allocating memory. Processor cycles will be measured using the x86 instruction \texttt{rdtsc} 100000 times to give a mean result. Using processor cycles as a benchmarking metric is both more precise and granular than using wall clock time, as it directly reflects the amount of computational work done by the CPU, independent of external factors such as background processes and system load.
+Since the design of TLSF is such that it sets an upper bound on the number of instructions required to allocate memory, it is not necessary to measure allocation of multiple different sizes. Instead, we will only measure allocation of a single size, 64 bytes. 
 
-Since the design of TLSF is such that it sets an upper bound on the number of instructions required to allocate memory, it is not necessary to measure allocation of multiple different sizes. Instead, we will only measure allocation of a single size, 64 bytes. Two cases will be measured, one where there exists a block in the heap that perfectly align with the allocation size, and another where there only exists a block that is larger than the allocation size. The latter case requires, in addition to doing the same operations as in the first case, searching the bitmap for a larger block and splitting it, which is used as the worst case test by M. Masmano et al.~\cite{TLSF}. Measuring these two cases will tell us the normal and worst performance of allocation.
+Three cases will be measured, of which the first two are: one where there exists a block in the heap that perfectly align with the allocation size, and another where there only exists a block that is larger than the allocation size. The latter case requires, in addition to doing the same operations as in the first case, searching the bitmap for a larger block and splitting it. This case is also used as the worst case test by M. Masmano et al.~\cite{TLSF} for the evaluation of the original TLSF design. The third case will be performing the first case and also initializing the returned memory to 0. This is to see how initializing the memory affects performance, as this is done after allocating memory in ZGC. Measuring these three cases will provide insight into both normal and worst-case allocation performance.
 
-% Explain why we are not using standardized benchmarks (becuase the use-case is narrowly scoped towards GC)
-% Ideally we would want to use the allocators in a standardized benchmark suite, like DaCapo or SPECjbb, that base themselves on realistic workloads. However, again, as the use-case of the optimized version is narrowed down significantly, it does not overlap with the tests in neither of the benchmark suites, or any other that we know about. Instead, we will test the allocators on a set of tests we create ourselves, that will give an impression of the performance of the allocator. To make the tests more credible and based on realistic workloads, we will extract allocation and free patterns from the real-world Linux utility programs: X, Y and Z. Extracting and using allocation and free patterns this way we feel give a fairer workload rather than generating a synthetic pattern, which gives the testing data at least some credibility.
-
-%The first test that we will measure is a single allocation and free. This will give an impression of how the allocators compare in their most basic functionality. The second will be a comprehensive test using the extracting allocation patterns. To get as accurate results as possible from these tests, we will run them multiple times and report an average as well as worst result.
-
-% What test cases will we consider:
-% - Single allocation/free (wall clock time)
-% - A distribution of allocations (collected from dacapo)
-%   - A mix of allocations/frees, with syntentically added frees (since we cannot gather free call data from dacapo... must mention why)
-%   - This is as close to integrating to OpenJDK we can get without actually integrating.
-%   - "Vi kan lätt återskapa en allokeringshistorik men inte free-historik", möjlig felkälla.
-%
-% We have focus on these tests because...
-
-% Describe how we've extracted allocation/free patterns.
-
-% How much memory does the allocator have in its pool for the tests.
-% The pool is statically allocated and does not change in size during runtime.
-%  - And why are we doing this...
+To measure performance we will look at the time it takes to perform the two cases for all three versions of the allocator. The measurements will tell us how the adaptations that have been made to the optimized version affect its performance when doing its most fundamental operation. To improve the reliability of the results, measurements will be collected by running the tests 100000 times and taking the mean value. Time is measured using the POSIX function \texttt{clock\_gettime()} with the clock set to \texttt{CLOCK\_MONOTONIC\_RAW}. Measurements are made right before and after calling \texttt{malloc()} on the allocator and the difference between the two is reported.
 
 \subsection{Measuring Fragmentation}
 
-When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze the worst-case of fragmentation for all versions of the allocator. To make the analysis suited toward ZGC, we place limitations on the allocators that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, we will align allocations to 8 bytes on all allocators to fairly compare them.
+When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze the worst-case of fragmentation for all versions of the allocator. To make the analysis suited toward ZGC, we place limitations on the allocators that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, to fairly compare them we will align allocations to 8 bytes on all allocators, since we are running on a 64-bit system.
 
 We will examine two worst-cases: (1) when maximum space is wasted due to both block header and padding, and (2) when maximum space is wasted only due to block header. For both of these cases, the smallest possible size will be allocated to fill the heap with as many blocks as possible. Keeping the smallest allocation size of ZGC small pages in mind, 17 bytes and 16 bytes will be allocated in the first and second case respectively, since 17 bytes requires maximum padding and 16 bytes require no padding.
 
@@ -73,58 +49,28 @@ Internal fragmentation is calculated in the following way, where the total alloc
 
 \begin{align}
     \text{waste} &= \text{block\_header} + \text{padding} \\
-    \text{num\_blocks} &= \frac{2097152}{\text{block\_header + allocation + padding}} \\
-    \text{internal\_fragmentation} &= \frac{\text{num\_blocks} \cdot \text{waste}}{2097152}
+    \text{num\_blocks} &= \frac{2\text{MB}}{\text{block\_header + allocation + padding}} \\
+    \text{internal\_fragmentation} &= \frac{\text{num\_blocks} \cdot \text{waste}}{2\text{MB}}
 \end{align}
 
-From looking at the sizes of the block headers, it is straightforward to conclude which allocator uses less memory overall since smaller header would mean less memory used overall when allocating the same size. However, the goal of this evaluation is to see how much memory could theoretically be wasted when using different versions of the allocator, which also includes padding. The final results will give us a range of worst-case memory wastage, which will vary depending on the amount of padding that is applied. We recognize that when using the allocator in practice it will most likely never reach this calculated worst-case. However, the results will provide an upper-bound that can be used to reason about the effectiveness of the allocator.
-
-% Wasted space due to block header overhead is something that is statically different between the three different versions of the allocators, as they all have different sizes for their respective header. Following this, we will consider the best and worst case for using any version of the allocator. First, the case where the heap is filled with a single block, requiring only one header. And secondly, the case when the heap is filled with as many blocks as possible of the smallest size, maximizing the number of block header required.
-
-% Looking at these two metrics will give us a range in where the wasted space due to block header will fall between, which will tell us how much memory each version of the allocator are potentially wasting for this purpose. To make the measurements reasonable for all versions of the allocator, the heap size will be set to 2MB to align with the requirements of the optimized version.
-
-%To measure internal fragmentation we will use a set of counter that are incremented and decremented during allocations and frees respectively. For each call to allocate, the number of bytes the user has requested along with the actual amount of memory used by the heap is recorded. Conversely, when a user frees a piece of memory, the corresponding amount of requested bytes and actual memory used are subtracted from their respective counters. With the two counters at hand, the internal fragmentation can be calculated as a percentage of the memory that is used as follows:
-%\[ \text{internal\_fragmentation} = \frac{\text{total requested bytes}}{\text{total allocated bytes}} \]
-
-%\subsection{Measuring Hole Fillability}
-
-%Measuring internal fragmentation is rather straightforward and well-defined. External fragmentation is however more tricky to define in a single metric that can easily be computed and compared. Instead, to gauge external fragmentation, and also to measure directly what this thesis aims to solve, we will measure a metric we call hole fillability.
-
-%Hole fillability is how well an allocator can fill available holes in a given state of the underlying memory of allocated and free blocks. This is similar to external fragmentation in the sense that hole fillability will tell us what the largest allocation that can be made is and how much memory is available to us. This will depend greatly on the size of the block headers, how much padding allocations must have and coalescing behavior, which differs between the different versions of the allocator.
-
-%To do this, we will gather snapshots of the heap when using the allocator with the allocation and free patterns collected for measuring performance. The snapshots will be randomly selected and each version of the allocator will be compared on the same snapshot to see how well they are able to fit new data inside holes in the heap.
-
-% Measure fragmentation:
-% - Internal fragmentation (through counters during allocations/frees)
-
-% - We will skip measuring external fragmentation, becuase it is hard to define because...
-
-%Note that while integration with ZGC would provide a definitive validation of the allocator's functionality, such integration testing is excluded from the scope of this thesis, as mentioned in Section~\ref{sec:delimitations}. With this said, investigating and implementing adaptations into an allocator in itself will contribute not only to future integration, but adapting any kind of free-list based allocator for use in garbage collection or similar areas.
+From looking at the sizes of the block headers, it is straightforward to conclude which allocator uses less memory overall since smaller header would mean less memory used overall when allocating the same size. However, the goal of this evaluation is to see how much memory could theoretically be wasted when using different versions of the allocator, which also includes padding. The final results will give us a range of worst-case memory wastage, which will vary depending on the amount of padding that is applied. In practice, the allocator will most likely never reach the calculated worst-case since all allocations will unlikely be of the same size. However, the results will provide an upper-bound that can be used to reason about the effectiveness of the allocator.
 
 \subsection{Machine to Collect Data}
 
-Performance benchmarks have been run on a single native machine. The specifications for this machine is shown in Table~\ref{table:machine}. Each version of the allocator is compiled using GCC 11.4.0 with the C++14 (\texttt{-std=c++14}) standard using optimization level three (\texttt{-O2}).
+Performance benchmarks have been run on two machines. The specifications for these machines are shown in Table~\ref{table:machines}. Each version of the allocator is compiled using GCC 11.4.0 with the C++14 (\texttt{-std=c++14}) standard using optimization level two (\texttt{-O2}).
 
 \begin{table}[H]
-\centering
-\footnotesize
-\begin{tabular}{p{1cm}p{2in}p{20mm}p{1cm}p{50pt}p{2cm}p{1cm}p{1cm}p{2cm}p{15mm}}
-Type   & \multicolumn{3}{p{1cm}}{OS}                 & Linux Kernel Version      & CPU                                      & Threads Per Core & Cores Per Socket & CPU Attached To Number Of Stockets & Memory \\
-\hline
-Native & \multicolumn{3}{p{1cm}}{Ubuntu 22.04.4 LTS} & Kernel 5.15.0-101-generic & AMD Opteron(TM) Processor 6274 @ 2.2 GHz & 2                & 8                & 2                                  & 110GB 
+\begin{tabular}{cp{5.54cm}p{5.54cm}}
+Configuration & Machine A                                                & Machine B                                              \\ \hline
+CPU           & AMD Opteron 6274 @ 2.2 GHz with 8 cores (2 threads/core) & Intel i7-1185G7 @ 3.0 GHz with 4 cores (2threads/core) \\ \hline
+Memory        & 110GB                                                    & 16GB                                                   \\ \hline
+L1 Cache      & 512KB (L1d), 1MB (L1i)                                   & 192KB (L1d), 128 KB (L1i)                              \\ \hline
+L2 Cache      & 32MB                                                     & 5MB                                                    \\ \hline
+L3 Cache      & 24MB                                                     & 12MB                                                   \\ \hline
+System        & \multicolumn{2}{c}{Ubuntu 22.04.4 LTS (Jammy Jellyfish)}                                                          \\ \hline
+Kernel        & Linux 5.15.0-101-generic                                 & Linux 6.5.0-26-generic                                
 \end{tabular}
-\caption{Machine used to run benchmarks.}
-\label{table:machine}
+\caption{Machines used to collect data.}
+\label{table:machines}
 \end{table}
 
-% What hardware are we collecting data on:
-% - OS, CPU (threads, cores), memory
-% - Why we have chosen this machine(s)
-
-% L1d:                   512 KiB (32 instances)
-% L1i:                   1 MiB (16 instances)
-% L2:                    32 MiB (16 instances)
-% L3:                    24 MiB (4 instances)
-
-% How are we compiling the allocator
-% - g++, optimization flags, c++ version

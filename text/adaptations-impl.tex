@@ -15,7 +15,7 @@ where $f$ and $s$ are the first- and second-level indexes respectively. Addition
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{figures/bitmap_flattening.png}
+    \includegraphics[width=0.9\textwidth]{figures/bitmap_flattening.png}
     \caption{Flattening of the 2D-matrix representation of TLSF bitmaps into a single 64-bit value. The first-level bitmap is disregarded in favor of indexing the new flattened bitmap using the first-level value instead. The number of first-levels are 14, indicated by bits of the same color belonging to the same first-level. The number of second-levels are 4, as indicated by the same number of colored bits.}
     \label{fig:bitmap_flattening}
 \end{figure}
@@ -95,7 +95,7 @@ Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common a
     \label{fig:concurrent_head_bits}
 \end{figure}
 
-\subsubsection{Inserting and removing blocks}
+\subsubsection{Insertion and removal of blocks}
 
 The process of concurrently inserting a block into a free-list is outlined in Algorithm~\ref{algorithm:concurrent_insert_block}. Notably, both the \texttt{load()} and \texttt{compare\_exchange()} operations are atomic. It is essential to recognize that, between loading the old head from the free-list and executing the \texttt{compare\_exchange()} operation, the new head must be assembled using data from the old head. However, there exists a potential issue wherein the thread responsible for this construction may be preempted, allowing another thread to modify the head during this time. To address this, if the \texttt{compare\_exchange()} operation fails, the thread will loop and create a new head until it successfully performs the operation.
 
