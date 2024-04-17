@@ -2,7 +2,7 @@
 \subsection{Allocation Performance}
 \label{sec:allocation-performance}
 
-The single allocation benchmark results are presented in Figure~\ref{fig:allocation_performance} for the two machines separately. It is observed that initializing the memory after allocating have negligible effect on performance when performed right after the allocation request. Performing the absolute worst-case allocation, when only a larger block exists, is shown to be slower in all cases than when a suitable block exists. This is expected since more work is done in this case than when a suitable block exists. Furthermore, the optimized version is on par with the performance of the reference version, while the general version is slower than the other two versions.
+The single allocation benchmark results are presented in Figure~\ref{fig:allocation_performance} for the two machines separately. It is observed that initializing the memory after allocating have negligible effect on performance when performed right after the allocation request. Performing the absolute worst-case allocation, when only a larger block exists, is shown to be slower in all cases than when a suitable block exists. This is expected since more work is done in this case than when a suitable block exists. Furthermore, the optimized version is on par with the performance of the reference version, while the general version is slower than the other two versions. 
 
 \begin{figure}[]
     \centering
