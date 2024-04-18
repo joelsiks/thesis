@@ -1,12 +1,11 @@
 
-The purpose of this work is to explore, implement and evaluate possible adaptations to an existing free-list-based allocator for use in ZGC. The findings will help facilitate a transition from bump-pointer allocation to free-list-based allocation, with the goal of improving the speed and memory efficiency of ZGC. Although qualitative metrics will be used to evaluate our findings, this work will mainly be about the adaptations that are done and what challenges and opportunities present themselves.
+The purpose of this work is to explore, implement and evaluate possible adaptations to an existing free-list-based allocator for use in ZGC. The findings will help facilitate a transition from bump-pointer allocation to free-list-based allocation, with the goal of improving the speed and memory efficiency of ZGC. Although quantitative metrics will be used to evaluate our findings, this work will mainly be about the adaptations that are done and what challenges and opportunities present themselves.
 
 Specifically, the research questions we seek out to answer are:
 
 \begin{enumerate}
-    \item What are adaptations that can be made to an existing allocator to improve either performance or memory efficiency?
-    \item What are the implications of adapting an allocator for use in ZGC?
-    \item How does the chosen adaptations affect the performance and memory efficiency of the allocator?
+    \item What boundaries are there to consider when adapting an allocator for ZGC?
+    \item How can the boundaries of ZGC be used to optimize performance and memory efficiency of the allocator?
 \end{enumerate}
 
 %%% Local Variables:

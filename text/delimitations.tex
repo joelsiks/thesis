@@ -1,10 +1,7 @@
 
-The main limitation of this project is that we will not be integrating the allocator into ZGC and OpenJDK, which would provide an optimal way of testing the suitability of the allocator. A scope of 20 weeks is deemed not enough to implement, adapt, evaluate and also integrate the allocator.
+The main delimitation of this project is that we will not be integrating the allocator into ZGC and OpenJDK, which would provide an optimal way of testing the suitability of the allocator. A scope of 20 weeks is deemed insufficient to implement, adapt, evaluate, and integrate the allocator comprehensively.
 
-As is discussed in Section~\ref{sec:zpage}, ZGC implements three different page types. However, in this work we will only focus on adapting the allocator for small pages due to different allocation behavior and sizes being made for different page types.
-
-% Linux?
-% Small pages?
+Additionally, we focus solely on adapting the allocator for small pages within ZGC. This delimitation allows us to concentrate on specific adaptations rather than accommodating multiple page types. Small pages offer a manageable scope for optimization, and results obtained can later inform adaptations for other page types. Large pages, reserved for extremely large single allocations, are considered irrelevant for our current objectives since our focus is primarily on typical memory usage scenarios.
 
 %%% Local Variables:
 %%% mode: latex
