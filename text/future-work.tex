@@ -19,7 +19,7 @@ Blocks that are smaller than 16 bytes require very little information on their p
     %\label{fig:lilliput_block_header}
 %\end{figure}
 
-\subsubsection{Addressing Starvation}
+\subsection{Addressing Starvation}
 \label{sec:future-work:starvation}
 
 One of the main selling points of TLSF is its bounded worst-case performance, which makes it an attractive choice in real-time systems where long response times are undesirable. The TLSF algorithm is able to achieve its bounded performance because it has no loops in its design. However, when introducing concurrency using a lock-free mechanism, as described in Section~\ref{sec:adaptations_impl:concurrency} this is no longer the case. The lock-free implementation of the free-lists in the optimized version requires adding a loop to make sure that the CAS instruction eventually succeeds. Thus, for concurrent use-cases, the worst-case performance of the optimized allocator is not bounded and may end up in cases where all but one thread starve. 
