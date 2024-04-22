@@ -1,26 +1,37 @@
 
-\subsection{Allocation Performance}
-\label{sec:allocation-performance}
+\subsection{Performance}
+\label{sec:results:performance}
 
-The single allocation benchmark results are presented in Figure~\ref{fig:allocation_performance} for the two machines separately. It is observed that initializing the memory after allocating have negligible effect on performance when performed right after the allocation request. Performing the absolute worst-case allocation, when only a larger block exists, is shown to be slower in all cases than when a suitable block exists. This is expected since more work is done in this case than when a suitable block exists. Furthermore, the optimized version is on par with the performance of the reference version, while the general version is slower than the other two versions. 
+The single allocation benchmark results is presented in Figure~\ref{fig:allocation_performance}. It is observed that initializing the memory after allocating have negligible effect on performance when performed right after the allocation request. Performing the absolute worst-case allocation, when only a larger block exists, is shown to be slower in all cases than when a suitable block exists. This is expected since more work is done in this case than when a suitable block exists. Furthermore, the optimized version is on par with the performance of the reference version, while the general version is slower than the other two versions. 
 
-\begin{figure}[]
+\begin{figure}[H]
     \centering
-    \begin{subfigure}[b]{1\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/allocation_performance_a.png}
-        \caption{Results from machine A.}
-        \label{fig:allocation_performance_a}
-    \end{subfigure}
-    \begin{subfigure}[b]{1\textwidth}
-        \centering
-        \includegraphics[width=\textwidth]{figures/allocation_performance_b.png}
-        \caption{Results from machine B.}
-        \label{fig:allocation_performance_b}
-    \end{subfigure}
+    \includegraphics[width=0.90\textwidth]{figures/allocation_performance.png}
     \caption{Allocation performance when allocating 64 bytes on the different versions of the allocator when there is (1) a 64 byte block and (2) a 1024 byte block present in the allocator.}
     \label{fig:allocation_performance}
 \end{figure}
+
+The relative performance results when applying patterns of allocations and frees are shown in Figure~\ref{fig:program_benchmarks}, and absolute values in Table~\ref{table:program_benchmarks}. Results are shown as the mean of 100000 iterations. We can observe that the reference version is about 15\% faster in all programs and that the general and optimized versions are on-par in most programs. There is an overhead of logistically applying the allocations and frees, which is added to all programs. As such, the results include this overhead.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.90\textwidth]{figures/program_benchmark.png}
+    \caption{Scaled run time when applying patterns from different programs The graph is linearly scaled such that the maximum value is 1.0}
+    \label{fig:program_benchmarks}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lrrrrrr}
+    {} & {cat} & {grep} & {ls} & {nano} & {sed} & {wc} \\
+    \midrule
+    Reference & 601.80 & 5642.16 & 1223.35 & 81184.00 & 9378.62 & 655.73 \\
+    General & 729.46 & 6296.89 & 1439.23 & 89139.11 & 10262.90 & 790.35 \\
+    Optimized & 718.12 & 6322.36 & 1421.11 & 88042.78 & 10284.13 & 786.14 \\
+    \end{tabular}
+    \caption{Mean benchmark results when applying patterns from different programs. Results are given in microseconds.}
+    \label{table:program_benchmarks}
+\end{table}
 
 \subsection{Internal Fragmentation}
 
@@ -28,7 +39,7 @@ The size of the block header for the different versions are: 32 bytes, of which 
 
 In the worst case with maximum padding necessary, the reference version will waste up to 57.5\%, general version 69.6\% and the optimized version 29.2\%, if filling the heap with as many allocations as possible of 17 bytes. Looking at the second case where there is no padding necessary for alignment, the reference version will waste up to 50\%, general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
 
-To summarize, when filling the heap with as small allocations as possible and considering the size of the block header and any necessary padding due to alignment, the reference version will waste 50\%-57.5\%, general version 66\%-69.6\% and the optimized version 0\%-29.2\%, depending on the amount of padding that is applied.
+To summarize, when filling the heap with as small allocations as possible and considering the size of the block header and any necessary padding due to alignment, the reference version will waste 50\%-57.5\%, general version 66\%-69.6\% and the optimized version 0\%-29.2\%, depending on the amount of padding that is applied. This means that for the optimized version, the single source of internal fragmentation is due to the padding that is applied.
 
 % Worst case for reference is when the blockheader + alignment is maximum.
 

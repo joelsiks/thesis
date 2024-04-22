@@ -1,4 +1,5 @@
 
+
 % Link results to research questions. Explain what the experiments tell you about your research questions. If any of the experiments “failed” or did not behave as ex- pected, try to reason about potential explanations and propose additional experiments that could be performed to lead the investigation further.
 
 % Limitations and future work. Describe the limitations of your work, i.e., under what assumptions do your conclusions hold? What potentially relevant aspects were outside the scope of your study? Possibly, suggest avenues for future work building upon your study.
@@ -7,6 +8,22 @@
     % Resultaten om 0-byte header
 
 % Diskutera resultaten, främst att vi bara mätt i "isolation" och "worst-case", säger egentligen ingenting om något average-case.
+
+% Applying patterns instead of using the allocators in a program will have an impact on cache-locality, which might not be insignificant when performing program logic in-between allocations and/or frees. However, although there is a noticeable difference in performance for the pattern application results, the difference is likely less noticeable when measured inside a program's run time. Disabling coalescing was necessary to fairly compare the allocators, but should in practice be required for both the reference and general versions and should be considered when interpreting the results.
+
+Exhaustive and comprehensive benchmarking of allocators is not feasible, and the performance results should not be interpreted as definitive. Additionally, both the single allocation and application of allocation and free patterns does not necessarily indicate how Java-programs will perform when using the allocator in ZGC. Applying patterns instead of using the allocators directly inside programs is also not optimal as it does not show how the allocators behave in practice. For example, without program logic mixed in between allocations and frees, the cache-locality is not fully representative, which might impact performance and thus the reliability of the results. Given these considerations, the benchmarks do compare the allocators on a level which is fairly defined, allowing us to reason about their relative performance. 
+
+The benchmarks should be sufficient to convince the reader that the optimized version is somewhat slower and differs in performance of about 15\% on average from the reference version when applying patterns from real-world programs. For single-allocation performance, the optimized version is on-par with the reference version, which is unexpected if the optimized version is slower when performing multiple allocations in combination with frees. 
+% TODO: End this paragraph
+
+%Although the reference version is faster in all pattern applications and on-par in single allocation, the optimized version uses its memory more efficiently, which might make the observed trade-off in performance worth it.
+
+The largest adaptation made to the allocator is the concept of the 0-byte header. The 0-byte header stores no information inside allocated blocks, but uses the first 16 bytes of a free block to store metadata, and thus requires the minimum allocation size to be 16, which aligns well with the same limit that ZGC has. The benefit followed by the adaptation, in addition to using less memory, is that allocated memory by the user can be packed more closely together, making more of it fit inside the same cache-line, increasing cache-locality, and likely performance as well. This will need to be explored more closely, but follows the same principle that the related Lilliput project~\cite{lilliput} in the OpenJDK is aimed at achieving, making it highly relevant.
+
+Looking at the worst-case for internal fragmentation, we can show that the only source of internal fragmentation for the optimized version is due to padding. Since the optimized version is able to completely remove the block header for allocated blocks, there is practically no memory overhead for allocated blocks apart from padding. This means that the optimized version is no different in terms of internal fragmentation from using bump-pointer allocation, which also applies padding to meet alignment requirements.
+
+% - Säger nödvändigtvis ingenting om hur Java-program kommer bete sig, men ger oss ett sätt att resonera och jämföra ett större use-case än single-allokering.
+% - Kan vara en grej att cache-lokalitet påverkar prestanda...
 
 %%% Local Variables:
 %%% mode: latex
