@@ -43,6 +43,9 @@ In order to fairly compare the versions of the allocators when applying allocati
 
 % To measure performance we will look at the time it takes to perform the three cases for the three versions of the allocator. The measurements will tell us how the adaptations that have been made to the optimized version affect its performance when doing its most fundamental operation. To improve the reliability of the results, measurements will be collected by running the tests 100000 times and taking the mean value. Time is measured using the POSIX function \texttt{clock\_gettime()} with the clock set to \texttt{CLOCK\_MONOTONIC\_RAW}. Measurements are made right before and after calling \texttt{malloc()} on the allocator and the difference between the two is reported.
 
+\subsubsection{Programs to Collect Patterns From}
+
+
 \subsection{Measuring Fragmentation}
 
 When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze the worst-case of fragmentation for all versions of the allocator. To make the analysis suited toward ZGC, we place limitations on the allocators that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, to fairly compare them we will align allocations to 8 bytes on all allocators, since we are running on a 64-bit system.
