@@ -46,23 +46,24 @@ In the process of allocating and freeing blocks within an allocator, the general
 
 The idea behind deferred coalescing is that when the user calls \texttt{free()}, the block being freed is not implicitly attempted to be coalesced with its adjacent physical neighbors. Instead, the allocator's API is extended to include an explicit coalesce operation. This operation scans through all blocks and coalesces as many as possible. Unlike immediate coalescing, a deferred approach postpones the process until a later point when a larger block is required.
 
-The explicit coalesce operation conducts a pass over all blocks, requiring only knowledge of the size of the current block to identify the location of the next block. This eliminates the need to store a pointer to the physical neighbor right before the current block, which is only used when coalescing in a \texttt{free()} call. The algorithm describing how the pass is done is shown in Algorithm~\ref{algorithm:coalesce_blocks}.
+The explicit coalesce operation conducts a pass over all blocks, requiring only knowledge of the size of the current block to identify the location of the next block. This eliminates the need to store a pointer to the physical neighbor right before the current block, which is only used when coalescing in a \texttt{free()} call. The method describing how the pass is done is shown in Listing~\ref{algorithm:coalesce_blocks}.
 
-\begin{algorithm}[H]
-current = first\_physical\_block\\
-\While{current != nullptr} {
-next = get\_next\_block(current)\;
-\uIf{next != nullptr \textbf{and} current->is\_free() \textbf{and} next->is\_free()} {
-    current = coalesce\_neighbors(current, next)\;
-    insert\_block(current)\;
+\begin{lstlisting}[language=C++, caption={Method for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list before the newly coalesced block is inserted.}, label={algorithm:coalesce_blocks}]
+void coalesce_blocks() {
+    BlockHeader *current = first_physical_block;
+
+    while(current != nullptr) {
+        BlockHeader *next = current->next;
+
+        if(next != nullptr && current->is_free() && next->is_free()) {
+            current = coalesce_neighbors(current, next);
+            insert_block(current);
+        } else {
+            current = next;
+        }
+    }
 }
-\Else {
-    current = next
-}
-}
-\label{algorithm:coalesce_blocks}
-\caption{Algorithm for explicitly coalescing all possible free blocks in the allocator. Note that coalesce\_neighbors() removes both blocks from the free-list before the newly coalesced block is inserted.}
-\end{algorithm}
+\end{lstlisting}
 
 \subsection{Block Header Adjustments}
 \label{sec:adaptations:block-header-adjustments}

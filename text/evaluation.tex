@@ -47,18 +47,18 @@ In order to fairly compare the versions of the allocators when applying allocati
 
 % Börja med att förklara vilka program jag använt (namn + version) och hur jag kört document
 
-Table~\ref{table:pattern-programs} show the specific versions and commands of the programs used to record patterns from. All commands except \texttt{ls} have performed their respective actions on the same file called \texttt{pi.txt}. The file contains the first 10000 decimals of pi, linebroken every 100 decimal to create 100 lines of 100 decimals. The \texttt{ls} command has been run inside a directory containing only the file \texttt{pi.txt}.
+Table~\ref{table:pattern-programs} show the specific versions and commands of the programs used to record patterns from. All commands except \texttt{ls} have performed their respective actions on the same file called \texttt{pi.txt}. The file contains the first 10000 decimals of pi, linebroken every 100 decimal to create 100 lines of 100 decimals. The \texttt{ls} command has been run inside a directory containing only the file \texttt{pi.txt}. The \texttt{nano} command opens \texttt{pi.txt} and exits immediately.
 
 \begin{table}[H]
 \centering
 \begin{tabular}{llp{10.4cm}}
 \textbf{Program} & \textbf{Version} & \textbf{Command} \\ \hline
-cat  & 8.32 & cat file.txt\\ \hline
-grep & 3.7  & grep "apple" file.txt\\ \hline
+cat  & 8.32 & cat pi.txt\\ \hline
+grep & 3.7  & grep 1425 pi.txt\\ \hline
 ls   & 8.32 & ls \\ \hline
-nano & 6.2  & nano file.txt\\ \hline
-sed  & 4.8  & sed file.txt "s/a/b/g"\\ \hline
-wc   & 8.32 & wc file.txt\\ \hline
+nano & 6.2  & nano pi.txt\\ \hline
+sed  & 4.8  & sed "s/1425/5241/g" pi.txt\\ \hline
+wc   & 8.32 & wc pi.txt\\ \hline
 \end{tabular}
 \caption{The programs used to record allocation and free patterns from and the specific commands used to execute them.}
 \label{table:pattern-programs}

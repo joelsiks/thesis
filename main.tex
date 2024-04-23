@@ -1,10 +1,12 @@
 % MUST use a4paper option
 % MAY use twoside, smaller font, and other class - but not for Självständigt arbete i IT
 \documentclass[a4paper,12pt]{article}
+
 % Use UTF-8 encoding in input files
 \usepackage[utf8]{inputenc}
 % Use T1 font encoding to make the \hyphenation command work with UTF-8
 \usepackage[T1]{fontenc}
+
 
 % Om ni skriver på svenska, använd denna rad:
 % \usepackage[english,swedish]{babel}
@@ -29,6 +31,35 @@
 
 \usepackage{booktabs}
 \usepackage{multirow}
+
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{minted}
+\usepackage{xcolor}
+\usepackage{listings}
+\lstset{language=C++,
+	basicstyle=\footnotesize\ttfamily,
+    keywordstyle=\color{blue},
+	stringstyle=\color{orange}\ttfamily,
+	commentstyle=\color{red}\ttfamily,
+	tabsize=2,
+	numbers=left, numberstyle=\tiny, numbersep=5pt,
+	breaklines=true,
+	showstringspaces=false,
+	breakatwhitespace=true,
+	prebreak={/},
+	captionpos=b,
+	columns=fullflexible,
+	escapeinside={\#*}{\^^M},
+	mathescape = true,
+    numbers = none
+}
+
+\usepackage[T1]{fontenc}
+\usepackage[scaled=0.85]{FiraMono}            % load a nice TT font
+
+\newcommand{\dollar}{\mbox{\textdollar}}
+\newcommand{\hash}{\mbox{\#}}
 
 % För att göra ett index behövs
 %  - \usepackage{makeidx}

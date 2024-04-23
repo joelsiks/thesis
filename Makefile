@@ -1,5 +1,6 @@
 
 ENTRYPOINT=main
+COMPILER=pdflatex
 
 default: cycle
 
@@ -7,16 +8,16 @@ open: cycle
 	open $(ENTRYPOINT).pdf
 
 main:
-	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
+	$(COMPILER) --shell-escape --synctex=1 $(ENTRYPOINT)
 
 bib:
 	bibtex $(ENTRYPOINT)
 
 cycle:
-	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
+	$(COMPILER) --shell-escape --synctex=1 $(ENTRYPOINT)
 	bibtex $(ENTRYPOINT)
-	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
-	pdflatex --shell-escape --synctex=1 $(ENTRYPOINT)
+	$(COMPILER) --shell-escape --synctex=1 $(ENTRYPOINT)
+	$(COMPILER) --shell-escape --synctex=1 $(ENTRYPOINT)
 
 clean:
 	rm -rf *.aux *.lof *.log *.lot *.synctex.gz *.toc svg-inkscape
@@ -31,4 +32,4 @@ diff.tex:
 	latexdiff prev.tex $(ENTRYPOINT).tex > diff.tex
 
 diff: diff.tex
-	pdflatex --shell-escape --synctex=1 diff.tex
+	$(COMPILER) --shell-escape --synctex=1 diff.tex
