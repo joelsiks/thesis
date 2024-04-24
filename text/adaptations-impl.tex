@@ -82,11 +82,11 @@ To be able to operate on the free-list concurrently without locks, we will use t
 \subsubsection{Solving The ABA Problem}
 \label{sec:adaptations_impl:aba_problem}
 
-% To remind, the ABA problem happens when a thread reads the value it wants to change with compare-and-swap, gets preempted, and when it resumes the actual value of the pointer happens to be equal to what the thread read before. Therefore the compare-and-swap operation may succeed despite data structure modifications possibly done by other threads during the preemption time.
+The ABA problem occurs when a thread employs compare-and-exchange to read a value it intends to change, gets interrupted, and upon resuming, finds the value it initially read remains unchanged, despite potential modifications by other threads. This can lead to successful compare-and-exchange operations even in the presence of intervening modifications during the interruption.
 
 A strategy for solving the ABA problems is ensuring that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, inside the allocators, pointers to blocks are not unique and can be inserted and removed any number of times. A way around this is to apply a so-called version tag to each pointer, which allow us to uniquely identify pointers by their version.
 
-Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, due to how compare-and-swap (CAS) (\texttt{compare\_exchange()} in C++) work, it is desirable to store the pointer and version tag in a single word, i.e. 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. This conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
+Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, due to how compare-and-exchange work, it is desirable to store the pointer and version tag in a single word, i.e. 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. This conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
 
 \begin{figure}[H]
     \centering
@@ -97,7 +97,7 @@ Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common a
 
 \subsubsection{Insertion and removal of blocks}
 
-The process of concurrently inserting a block into a free-list is outlined in Listing~\ref{algorithm:concurrent_insert_block}. Notably, both the \texttt{load()} and \texttt{compare\_exchange()} operations are atomic. It is essential to recognize that, between loading the old head from the free-list and executing the \texttt{compare\_exchange()} operation, the new head must be assembled using data from the old head. However, there exists a potential issue wherein the thread responsible for this construction may be preempted, allowing another thread to modify the head during this time. To address this, if the \texttt{compare\_exchange()} operation fails, the thread will loop and create a new head until it successfully performs the operation.
+The process of concurrently inserting a block into a free-list is outlined in Listing~\ref{algorithm:concurrent_insert_block}. Between loading the old head from the free-list and executing the \texttt{compare\_exchange()} operation, the new head must be constructed using data from the old head. However, there is a potential issue wherein the thread responsible for construction may be preempted, allowing another thread to modify the head during this time. To address this, if the \texttt{compare\_exchange()} operation fails, the thread will loop and create a new head until it is successfully performed.
 
 \begin{lstlisting}[language=C++, caption={Concurrent insertion of a lock into the head of a free-list.}, label={algorithm:concurrent_insert_block}]
 void insert_block(BlockHeader *blk) {
@@ -107,24 +107,21 @@ void insert_block(BlockHeader *blk) {
         TaggedBlockHeader *head = blocks[mapping].load();
         BlockHeader *head_ptr = extract_ptr(head);
         uint32_t version = extract_version(head);
-        TaggedBlockHeader *new_head = construct(head->next, version + 1);
+        blk_set_next(blk, head_ptr);
+        TaggedBlockHeader *new_head = construct(blk, version + 1);
     } while(blocks[mapping].compare_exchange(head, new_head));
 
     update_bitmap(mapping);
 }
 \end{lstlisting}
 
-The process of concurrently removing a block from a free-list, as illustrated in Listing~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. The main difference is that instead of a while-loop, removal involves replacing the head with the next block in the list, possibly a NULL value.
-
-If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contain additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails, without looping until successful like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again.
+The process of concurrently removing a block from a free-list, as illustrated in Listing~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contain additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails, without looping until successful like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again, and thus loop outside the \texttt{remove\_block()} function.
 
 \begin{lstlisting}[language=C++, caption={Concurrent removal of the head of a free-list.}, label={algorithm:concurrent_remove_block}]
 BlockHeader *remove_block(Mapping mapping) {
     TaggedBlockHeader *head = blocks[mapping].load();
-
     BlockHeader *head_ptr = extract_ptr(head);
     uint32_t version = extract_version(head);
-
     TaggedBlockHeader *new_head = construct(head->next, version + 1);
 
     if(blocks[mapping].compare_exchange(head, new_head)) {
