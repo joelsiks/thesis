@@ -20,6 +20,15 @@ In contrast, the benchmark result of performing a single free is shown in Figure
     \label{fig:free_performance}
 \end{figure}
 
+The ratio between allocations and frees for the patterns collected from real-world programs are shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with NULL as argument, i.e \texttt{free(nullptr)}. The reason this is highlighted is since \texttt{free(nullptr)} returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
+
+\begin{figure}[H]
+    \centering
+    \includesvg[width=0.8\textwidth]{figures/program_ratios.svg}
+    \caption{Ratio between allocations and frees for the benchmark programs, also showing the ratio of frees performed on null pointers. The total number of allocations and frees are shown below the program name in parentheses.}
+    \label{fig:program_ratios}
+\end{figure}
+
 The relative performance results when applying patterns of allocations and frees are shown in Figure~\ref{fig:program_benchmarks}, and absolute values in Table~\ref{table:program_benchmarks}. The reference version is observed to be about 12\% faster in average than the other two versions across all programs, while the general and optimized versions are on-par in most programs, with slight deviations. There is an overhead of logistically applying the allocations and frees, which is added to all programs. As such, the results include this overhead. 
 
 \begin{figure}[H]
@@ -41,15 +50,6 @@ The relative performance results when applying patterns of allocations and frees
     \caption{Mean benchmark results when applying patterns from different programs. Results are given in microseconds.}
     \label{table:program_benchmarks}
 \end{table}
-
-The ratio between allocations and frees for the patterns are shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with NULL as argument, i.e \texttt{free(nullptr)}. The reason this is highlighted is since \texttt{free(nullptr)} returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
-
-\begin{figure}[H]
-    \centering
-    \includesvg[width=0.8\textwidth]{figures/program_ratios.svg}
-    \caption{Ratio between allocations and frees for the benchmark programs, also showing the ratio of frees performed on null pointers. The total number of allocations and frees are shown below the program name in parentheses.}
-    \label{fig:program_ratios}
-\end{figure}
 
 \subsection{Internal Fragmentation}
 
