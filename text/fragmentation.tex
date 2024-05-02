@@ -3,7 +3,9 @@ We classify fragmentation as being either internal or external. Internal fragmen
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/internal_fragmentation.png}
+    \vspace*{0.5cm}
+    \includesvg[width=0.6\textwidth]{figures/internal_fragmentation.svg}
+    \vspace*{0.5cm}
     \caption{A memory region containing one allocated piece of memory that is 128 bytes large. However, the user only requires 100 bytes of those and thus, 28 bytes is wasted.}
     \label{fig:internal_fragmentation}
 \end{figure}
@@ -12,7 +14,10 @@ External fragmentation occurs when there is enough memory available in total, bu
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/external_fragmentation.png}
+    \vspace*{0.5cm}
+    \hspace*{1.5cm}
+    \includesvg[width=0.8\textwidth]{figures/external_fragmentation.svg}
+    \vspace*{0.5cm}
     \caption{A memory region containing several allocated blocks with unused space in between them. Although the total sum of the unused portions is large, a request of more than 32 bytes cannot be fulfilled.}
     \label{fig:external_fragmentation}
 \end{figure}
