@@ -7,15 +7,16 @@ The reference version of the allocator has been abstracted into a base class nam
 
 \subsection{New Bitmap Design}
 
-Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_range} regarding the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``two-level'' from Two-Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The new bitmap is indexed using the formula: 
+Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_range} regarding the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``two-level'' from Two-Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The new bitmap is indexed using the formula:
 \[
-    \text{bitmap\_index($f, s$)} = f \cdot 4 + s
+    I(f, s) = 4f + s
 \]
 where $f$ and $s$ are the first- and second-level indexes respectively. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/bitmap_flattening.png}
+    \includesvg[width=0.9\textwidth]{figures/bitmap_flattening.svg}
+    \vspace*{4mm}
     \caption{Flattening of the 2D-matrix representation of TLSF bitmaps into a single 64-bit value. The first-level bitmap is disregarded in favor of indexing the new flattened bitmap using the first-level value instead. The number of first-levels are 14, indicated by bits of the same color belonging to the same first-level. The number of second-levels are 4, as indicated by the same number of colored bits.}
     \label{fig:bitmap_flattening}
 \end{figure}
@@ -24,7 +25,9 @@ The correlation between the bitmap and the free-lists is depicted in Figure~\ref
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{figures/bitmap_relationship.png}
+    \vspace*{0.2cm}
+    \includesvg[width=1\textwidth]{figures/bitmap_relationship.svg}
+    \vspace*{1mm}
     \caption{Relationship between the new bitmap representation and accessing the corresponding free-lists.}
     \label{fig:bitmap_relationship}
 \end{figure}
@@ -38,21 +41,21 @@ The block header, as designed in the reference implementation, is shown in Figur
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_adap_reference.png}
+        \includesvg[width=\textwidth]{figures/blockheader_adap_reference.svg}
         \caption{Reference implementation block header.}
         \label{fig:blockheader_adap_reference}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_adap_general.png}
+        \includesvg[width=\textwidth]{figures/blockheader_adap_general.svg}
         \caption{Adapted general block header.}
         \label{fig:blockheader_adap_general}
     \end{subfigure}%
     \hfill
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
-        \includegraphics[width=\textwidth]{figures/blockheader_adap_optimized.png}
+        \includesvg[width=\textwidth]{figures/blockheader_adap_optimized.svg}
         \caption{Adapted optimized block header.}
         \label{fig:blockheader_adap_optimized}
     \end{subfigure}
@@ -90,7 +93,8 @@ Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common a
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\textwidth]{figures/concurrent_head_bits.png}
+    \vspace*{4mm}
+    \includesvg[width=1\textwidth]{figures/concurrent_head_bits.svg}
     \caption{Bit representation of a free-list head in the allocator. The 32 most significant bits are used to store the offset and the 32 least significant bits are used to store the version tag.}
     \label{fig:concurrent_head_bits}
 \end{figure}
