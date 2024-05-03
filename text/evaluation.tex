@@ -16,19 +16,18 @@ The three different versions of the TLSF allocator developed in this work that w
 The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
 
 \begin{table}[H]
-\centering
-\begin{tabular}{lllll}
-\hline
-Configuration Variable    & General  & \multicolumn{3}{l}{Optimized} \\ \hline
-First-Level Index         & 32       & \multicolumn{3}{l}{14}        \\
-Second-Level Index (log2) & 5        & \multicolumn{3}{l}{2}         \\
-Minimum Block Size        & 32       & \multicolumn{3}{l}{16 }       \\
-Use Second Levels         & True     & \multicolumn{3}{l}{False}     \\
-Use Deferred Coalescing   & False    & \multicolumn{3}{l}{True}      \\
-Block Header Length       & 32       & \multicolumn{3}{l}{0}        
-\end{tabular}
-\caption{Configuration variables for the general and optimized versions of the allocator.}
-\label{table:configuration-variables}
+    \centering
+    \begin{tabular}{lp{2cm}p{6.9cm}}
+    \textbf{{Configuration Variable}} & \textbf{{General}} & \textbf{{Optimized}} \\ \hline
+    First-Level Index         & 32       & 14     \\ \hline
+    Second-Level Index (log2) & 5        & 2      \\ \hline
+    Minimum Block Size        & 32       & 16     \\ \hline
+    Use Second Levels         & True     & False  \\ \hline
+    Use Deferred Coalescing   & False    & True   \\ \hline
+    Block Header Length       & 32       & 0        
+    \end{tabular}
+    \caption{Configuration variables for the general and optimized versions of the allocator.}
+    \label{table:configuration-variables}
 \end{table}
 
 \subsection{Measuring Performance}
