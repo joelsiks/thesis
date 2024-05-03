@@ -20,7 +20,7 @@ In contrast, the benchmark result of performing a single free is shown in Figure
     \label{fig:free_performance}
 \end{figure}
 
-The ratio between allocations and frees for the patterns collected from real-world programs are shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with NULL as argument, i.e \texttt{free(nullptr)}. The reason this is highlighted is since \texttt{free(nullptr)} returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
+The ratio between allocations and frees for the patterns collected from real-world programs are shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with NULL as argument, i.e \texttt{free(nullptr)}. The reason this is highlighted is since calling free on a nullptr returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
 
 \begin{figure}[H]
     \centering
