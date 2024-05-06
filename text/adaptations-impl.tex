@@ -1,17 +1,18 @@
 
-In this section we will go over implementation details of adaptations described in the previous section that require more in-depth explanation.
+In this section we will cover the implementation details that are relevant for the adaptations described in the previous section.
 
 \subsection{Allocator Versions}
 
-The reference version of the allocator has been abstracted into a base class named \texttt{TLSFBase}. From this base case, the user must provide a set of configuration variables that define how the allocator behaves. As such, each unique set of configuration variables define a new allocator. Additionally, an allocator may override the implementation of the methods defined in the base class so that calculations may be done in a different way. This allows different versions to apply different methods for allocation and freeing for example, as well as different solutions for concurrency.
+The reference version of the allocator has been abstracted into a base class named \texttt{TLSFBase}. From this base case, the user must provide a set of configuration variables that define how the allocator behaves. As such, each unique set of configuration variables define a new allocator. Additionally, an allocator may override the implementation of the methods defined in the base class so that computations may be done differently. This allows different versions to apply different methods for allocation and freeing for example, as well as applying different strategies for concurrency.
 
 \subsection{New Bitmap Design}
 
-Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_range} regarding the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``two-level'' from Two-Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The new bitmap is indexed using the formula:
+Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_range} regarding the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, we can construct a new bitmap representation, as shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``two-level'' from Two-Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The mapping for the bitmap is calculated by combining the first- and second-level mappings, which are calculated the same way as in the reference design. Hence, the mapping for the new bitmap is calculated using the formula below, where $f$ and $s$ are the first- and second-level indexes respectively.
 \[
     I(f, s) = 4f + s
 \]
-where $f$ and $s$ are the first- and second-level indexes respectively. Additionally, the lowest size classes have been placed at the least significant bits of the bitmap to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
+
+Like is done in the reference design, the new bitmap places the classes of the lowest size at the least significant bits to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
 
 \begin{figure}[H]
     \centering
