@@ -2,22 +2,16 @@
 \subsection{Integration With ZGC}
 \label{sec:future-work:integration}
 
-As highlighted thoroughly throughout the report, the natural next step of this work is to integrate it into ZGC. As highlighted in Section~\ref{sec:individual_contrubitons}, N. Gärds~\cite{niclas_report} has, in parallel to when this work was performed, investigated integrating an allocator into ZGC. His work focuses on the challenges and opportunities of integrating any free-list allocator into ZGC, not specifically the optimized TLSF allocator described in this work. As such, it would be interesting to use the findings of Gärds' to integrate the optimized TLSF allocator into ZGC so that its impact may be fully understood.
+As highlighted thoroughly throughout the report, the natural next step of this work is to integrate it into ZGC. Mentioned briefly in Section~\ref{sec:individual_contrubitons}, N. Gärds~\cite{niclas_report} has, in parallel to when this work was performed, investigated integrating an allocator into ZGC. His work focuses on the challenges and opportunities of integrating any free-list allocator into ZGC, not specifically the optimized TLSF allocator described in this work. As such, it would be interesting to use the findings of N. Gärds to integrate the optimized TLSF allocator into ZGC so that its impact may be fully understood in the environment it is intended to be used.
+
+\newpage
 
 \subsection{Smaller Minimum Allocation Size}
 \label{sec:future-work:lilliput}
 
-The smallest possible unit of allocation inside ZGC is at the time of writing 16 bytes. This limit is due to the fact that object headers in Java are 16 bytes large, or 128 bits. However, work is currently in progress to reduce the size of the object header down to 64 bits or less through project Lilliput~\cite{lilliput}. Since Lilliput is still work in progress, the smaller allocation size of 8 bytes has not been supported in the general nor optimized version of the allocator.
+The smallest possible unit of allocation inside ZGC is at the time of writing 16 bytes, which is limited by the size of the Java object header, which is always aligned to a minimum of 16 bytes on a 64-bit system. Work is ongoing to reduce the size of the object header to 8 bytes or less through project Lilliput~\cite{lilliput}. Since Lilliput is still considered work in progress, allocation sizes smaller than 16 bytes are not supported in the general nor optimized version of the allocator.
 
-Blocks that are smaller than 16 bytes require very little information on their particular size, which goes against using 8 bytes for storing size information, as detailed in Section~\ref{sec:adaptations_impl:0-byte-header}. Furthermore, as discussed in Section~\ref{sec:tlsf} regarding the design of TLSF and continuing in Section~\ref{sec:adaptations:architectural-considerations} on architectural adjustments, there is now an extra bit available for storing metadata inside block headers when aligning allocations to 8 bytes instead of 4 bytes. One might use this third metadata bit as a binary property to indicate whether a block is the smallest possible size, 8 bytes, or not. If the bit is set, the size field in the block header can be replaced with the next and prev pointers, making it possible to store all metadata about the block inside 8 bytes.
-
-% TODO: Fix image
-%\begin{figure}[H]
-    %\centering
-    %\includegraphics[width=0.5\textwidth]{figures/blockheader_lilliput.png}
-    %\caption{Illustration of what the block header could contain after adjustments for Lilliput.}
-    %\label{fig:lilliput_block_header}
-%\end{figure}
+It would be impractical to use 8 bytes to store information about the size of such small objects if or when adding support for smaller allocations in the future, as is done in the design of the optimized allocator. As discussed in Section~\ref{sec:tlsf} regarding the design of TLSF and continuing in Section~\ref{sec:adaptations:architectural-considerations} on architectural adjustments, there is now an extra bit available for storing metadata inside block headers. The extra bit could be used to compact the header for smaller allocations even more, by using it as a binary property to indicate whether a block is the smallest possible size, 8 bytes, or not. If the bit is set, the size field in the block header can be replaced with the next and prev pointers, making it possible to store all metadata about the block inside 8 bytes.
 
 \subsection{Addressing Starvation}
 \label{sec:future-work:starvation}

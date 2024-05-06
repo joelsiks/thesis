@@ -9,6 +9,8 @@ The optimized version of the allocator is tailored toward ZGC to the extent that
 
 Because of these difficulties, we have chosen to limit evaluation to cases that can be fairly compared and reasoned about. This method is not exhaustive, which is often the case when evaluating allocators in general, but will provide a level on which to reason about the relative performance of the versions of the allocator.
 
+\newpage
+
 \subsection{Allocator Configurations}
 
 The three different versions of the TLSF allocator developed in this work that will be evaluated and compared in this section are: the reference TLSF implementation, the general version and the optimized version for ZGC. 
@@ -66,8 +68,6 @@ wc   & 8.32 & wc pi.txt\\
 Patterns have been recorded using the \texttt{LD\_PRELOAD} environment variable in Linux to hook into \texttt{malloc()} and \texttt{free()} and output the requests to a file, in the same order they were performed. The recorded pattern is then replayed on the different versions of the allocator in the same order they were recorded, essentially emulating the usage of the allocator in isolation.
 
 \subsection{Measuring Fragmentation}
-
-% When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation without having to rely on a pattern of allocations and free requests, we will numerically analyze the worst-case of fragmentation for all versions of the allocator. To make the analysis suited toward ZGC, we place limitations on the allocators that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. Additionally, even though one might use different alignment for the different allocators, to fairly compare them we will align allocations to 8 bytes on all allocators, since we are running on a 64-bit system.
 
 When reasoning about internal fragmentation in the different versions of the allocator, we are concerned about two things: wasted space due to block header overhead and wasted space due to padding/alignment. To gauge internal fragmentation, we will numerically analyze the worst-case for all versions of the allocator. The analysis is suited toward ZGC by placing limitations on the allocators that align with small pages of ZGC. The heap size is set to 2MB and allowed allocation sizes are in the range [16B, 256KB]. To fairly compare the versions of the allocator, all allocations are aligned to 8 bytes, which is the same as pointer alignment on a 64-bit system.
 
