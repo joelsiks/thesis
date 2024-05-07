@@ -16,18 +16,18 @@ Like is done in the reference design, the new bitmap places the classes of the l
 
 \begin{figure}[H]
     \centering
-    \includesvg[width=0.9\textwidth]{figures/bitmap_flattening.svg}
+    \includesvg[width=0.8\textwidth]{figures/bitmap_flattening.svg}
     \vspace*{4mm}
     \caption{Flattening of the 2D-matrix representation of TLSF bitmaps into a single 64-bit value. The first-level bitmap is disregarded in favor of indexing the new flattened bitmap using the first-level value instead. The number of first-levels are 14, indicated by bits of the same color belonging to the same first-level. The number of second-levels are 4, as indicated by the same number of colored bits.}
     \label{fig:bitmap_flattening}
 \end{figure}
 
-The correlation between the new bitmap and free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. The most granularity in size-ranges for the free-lists are found for the smallest allocation sizes, which aligns well with most allocations being small inside most Java programs. This means that less memory will potentially be wasted and less splitting done since blocks match the request size more often, thus saving performance.
+The correlation between the new bitmap and free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. The highest granularity of free-list size-ranges are found for the smallest allocations, which aligns well with most allocations being small inside most Java programs. This leads to less memory potentially being wasted and less splitting done since more blocks match the request size, thus saving performance.
 
 \begin{figure}[H]
     \centering
     \vspace*{0.2cm}
-    \includesvg[width=1\textwidth]{figures/bitmap_relationship.svg}
+    \includesvg[width=1.0\textwidth]{figures/bitmap_relationship.svg}
     \vspace*{1mm}
     \caption{Relationship between the new bitmap representation and accessing the corresponding free-lists.}
     \label{fig:bitmap_relationship}
