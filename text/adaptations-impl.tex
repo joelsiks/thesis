@@ -12,7 +12,7 @@ Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_ran
     I(f, s) = 4f + s
 \]
 
-Like is done in the reference design, the new bitmap places the classes of the lowest size at the least significant bits to make searching for the next non-empty free-list efficient using the find-first-set bit instruction.
+Like is done in the reference design, the new bitmap places the classes of the lowest size at the least significant bits to make searching for the next non-empty free-list efficient using the find-first-set (\texttt{ffs}) bit instruction. Furthermore, the new design only requires searching a single bitmap, making a single \texttt{ffs} instructions enough to find free-lists in any first-level, unlike the reference design which requires two \texttt{ffs} instructions.
 
 \begin{figure}[H]
     \centering
@@ -22,7 +22,7 @@ Like is done in the reference design, the new bitmap places the classes of the l
     \label{fig:bitmap_flattening}
 \end{figure}
 
-The correlation between the bitmap and the free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. However, with the flattened adaptation, the relevant free-list is more efficiently determined by looking in a single bitmap, not two bitmaps as in the original design. Additionally, the most granularity in size-ranges for the free-lists are found for the smallest allocation sizes, which aligns well with most allocations being small inside Java. This means that less memory will potentially be wasted and less splitting done, which saves performance.
+The correlation between the new bitmap and free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. The most granularity in size-ranges for the free-lists are found for the smallest allocation sizes, which aligns well with most allocations being small inside most Java programs. This means that less memory will potentially be wasted and less splitting done since blocks match the request size more often, thus saving performance.
 
 \begin{figure}[H]
     \centering
@@ -86,11 +86,11 @@ To be able to operate on the free-list concurrently without locks, we will use t
 \subsubsection{Solving The ABA Problem}
 \label{sec:adaptations_impl:aba_problem}
 
-The ABA problem occurs when a thread employs compare-and-exchange to read a value it intends to change, gets interrupted, and upon resuming, finds the value it initially read remains unchanged, despite potential modifications by other threads. This can lead to successful compare-and-exchange operations even in the presence of intervening modifications during the interruption.
+The ABA problem occurs when a thread employs compare-and-exchange to read a value it intends to change, gets interrupted, and upon resuming, finds the value it initially read remains unchanged, despite potential modifications by other threads. This can lead to successfully performing a compare-and-exchange operation even when modifications during the interruption could have occurred.
 
-A strategy for solving the ABA problems is ensuring that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, inside the allocators, pointers to blocks are not unique and can be inserted and removed any number of times. A way around this is to apply a so-called version tag to each pointer, which allow us to uniquely identify pointers by their version.
+A strategy for solving the ABA problems is ensuring that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, pointers to blocks are not unique in the allocator and can be inserted and removed any number of times. One way to achieve pointer uniqueness is to apply a so-called version tag to each pointer, which makes it possible to uniquely identify pointers.
 
-Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, due to how compare-and-exchange work, it is desirable to store the pointer and version tag in a single word, i.e. 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. This conversion allows us to store the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
+Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, due to how compare-and-exchange work, it is desirable to store the pointer and version tag in a single word, i.e. 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. This conversion allows storing the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
 
 \begin{figure}[H]
     \centering
