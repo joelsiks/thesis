@@ -9,21 +9,18 @@ As explained in Section~\ref{sec:tlsf}, the two least significant bits within th
 
 \subsection{General and Optimized Versions}
 
-% TODO: Ta upp att det är mycket relevant att hålla antalet rader kod minimalt eftersom OpneJDK redan är mycket omfattande och det är vettigt att hålla underhållnadskostnader nere.
-
 When further adapting the allocator we will consider the use cases of either using it as a normal allocator in cases where a traditional malloc/free combination is used, or as a way to allocate objects on pages in ZGC. A way to realize this is by making the allocator configurable, similarly to what E. Berger et al.~\cite{configurable_allocator} have done, utilizing C++ templates and inheritance. Having a configurable allocator is not only desirable from a maintenance perspective, but it also allows adaptation for changing environment and requirements. Additionally, it becomes easier to compare different versions of the allocator by changing the configuration, streamlining the process of measuring the efficacy of any potential improvements.
 
 Moving on, we will refer to the use-case of using the allocator as a general allocator as the general version, and the adapted, or optimized, version for ZGC as the optimized version. The general version will aim to be as similar to the reference implementation as possible.
 
 \subsection{Reduced Allocation Size Range}
 \label{sec:adaptations:reduced_allocation_range}
-%We note that the allowed sizes in the medium range is a factor of 16KB larger than the small range. This allows us to limit the allocator to the size range of small page, with an additional multiplication factor of 1 for small pages and 16KB for medium pages.
 
 In ZGC, small pages limits the user to allocate in a specific size range, namely [16B, 256KB], as mentioned in Section~\ref{sec:zpage}. To our advantage, we can use this to store metadata about the allocator in a more efficient way. Specifically, we are able to limit the number of free-lists that are needed and in turn the number of bits needed in the bitmaps.
 
 We need 14 first-levels to be able to index every power of two inside the small page range, with a lower-bound of $2^4 =$ 16B and an upper-bound of $2^{17} =$ 128KB. It is desirable to store all bitmap information in a single 64-bit word for performance reasons, both in terms of cache efficiency and usage of efficient bit instructions on lookup. If we want to stay inside the 64-bit limit, we must choose the number of second-levels accordingly. For efficiency reasons again, the number of second levels should be a power of two~\cite{TLSF} so that bit-shift instructions can be used. The only value this leaves us is 4, which results in $14 * 4 =$ 56-bits for storing all necessary metadata.
 
-Since a page is 2MB large, the initial block will be of that size as well, which is significantly larger than the maximum allocation size of 256KB. There are two ways to solve this: either break the initial block down into smaller blocks, or allow storing blocks larger than the maximum allocation size. For simplicity's sake, we will add another free-list that stores blocks larger than the maximum allocation size, called a ``large-list'' at the 57th-bit. This is not really a problem as the same methods for finding blocks in the bitmap can be used.
+Since a page is 2MB large, the initial block will be of the same size, which is significantly larger than the maximum allocation size of 256KB. There are two ways to solve this: either break the initial block down into smaller blocks, or allow storing blocks larger than the maximum allocation size. For simplicity's sake, we add another free-list that stores blocks larger than the maximum allocation size, called a ``large-list'' at the 57th-bit. The same methods for finding blocks in the bitmap can be used.
 
 To summarize, we now only need 57-bits for storing all information necessary for all free-lists, which fits inside a word of 64-bits. Having a single word allows us to find free-lists that contain blocks faster, using a more simplified indexing process. Additionally, when considering concurrency later on, we can use atomic operations when performing updates on the bitmap. A potential drawback of reducing the number of second-levels down to only 4 is that it could have a negative impact on fragmentation.
 
