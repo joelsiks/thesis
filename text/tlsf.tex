@@ -14,7 +14,7 @@ When the user requests N bytes from the allocator, the allocator aligns N to mee
     \label{fig:tlsf_allocation}
 \end{figure}
 
-When a block is freed, TLSF tries to coalesce the block with its neighboring blocks if they are free. Immediately coalescing when freeing allows the allocator to have larger blocks available for larger request sizes as often as possible. Having as few small blocks as possible minimizes fragmentation.
+When a block is freed, TLSF tries to coalesce the block with its neighboring blocks if they are free. Immediately coalescing when freeing allows the allocator to have larger blocks available for larger request sizes as often as possible. Having as few small blocks as possible minimizes fragmentation. After coalescing has been attempted, the block is inserted into the free-list matching its final size.
 
 \subsection{Technical Description}
 
