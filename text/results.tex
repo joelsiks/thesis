@@ -7,11 +7,11 @@ The result of the single allocation benchmark is presented in Figure~\ref{fig:al
 \begin{figure}[H]
     \centering
     \includesvg[width=0.8\textwidth]{figures/allocation_performance.svg}
-    \caption{Performance of a single allocation on the different versions of the allocator when a suitable block exists, a suitable block present and initializing the memory immediately after, and only a larger block exists.}
+    \caption{Performance of a single allocation on the different versions of the allocator when a suitable block exists, a suitable block exists and initializing the memory immediately after, and only a larger block exists.}
     \label{fig:allocation_performance}
 \end{figure}
 
-In contrast, the benchmark result of performing a single free is shown in Figure~\ref{fig:free_performance}. The general and optimized versions are observed to be comparable and are both about 25\% slower than the reference version. It is worth noting that both the reference and general version have coalescing disabled, which has an impact on performance and should be taken into account when considering the results.
+In contrast, the benchmark result of the single free benchmark is shown in Figure~\ref{fig:free_performance}. The general and optimized versions are observed to be comparable and are both about 25\% slower than the reference version. It is worth noting that both the reference and general version have coalescing disabled, which has an impact on performance and should be taken into account when considering the results.
 
 \begin{figure}[H]
     \centering
@@ -29,7 +29,7 @@ The ratio between allocations and frees for the patterns collected from real-wor
     \label{fig:program_ratios}
 \end{figure}
 
-The relative performance results when applying patterns of allocations and frees are shown in Figure~\ref{fig:program_benchmarks}, and absolute values in Table~\ref{table:program_benchmarks}. The reference version is observed to be about 12\% faster in average than the other two versions across all programs, while the general and optimized versions are on-par in most programs, with slight deviations. There is an overhead of logistically applying the allocations and frees, which is added to all programs. As such, the results include this overhead. 
+Performance results of applying patterns of allocations and frees are shown in Figure~\ref{fig:program_benchmarks}, with absolute values in Table~\ref{table:program_benchmarks}. The reference version is observed to be about 12\% faster in average than the other two versions across all programs, while the general and optimized versions are on-par in most programs, with slight deviations. There is an overhead of logistically applying the allocations and frees, which is added to all programs and is included in the results.
 
 \begin{figure}[H]
     \centering
@@ -50,6 +50,8 @@ The relative performance results when applying patterns of allocations and frees
     \caption{Mean benchmark results when applying patterns from different programs. Results are given in microseconds.}
     \label{table:program_benchmarks}
 \end{table}
+
+\newpage
 
 \subsection{Internal Fragmentation}
 

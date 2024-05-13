@@ -6,7 +6,7 @@ This section covers the implementation details that are relevant for the adaptat
 The reference implementation of the allocator has been abstracted into a base class named \texttt{TLSFBase}. From the base class, the user must provide a set of configuration variables that define how the allocator behaves, where each unique set of configuration variables define a new allocator. An allocator may override the implementation of the methods defined in the base class so that computations may be done differently. For example, this allows different versions to apply different methods for allocation, freeing and support for concurrency. The configuration variables are:
 
 \begin{enumerate}
-    \item Number of next- and first-levels (Sets the size range granularity and number of free-list)
+    \item Number of first- and second-levels (Sets the size range granularity and number of free-list)
     \item Minimum block size (The minimum size of blocks)
     \item Block header size (The size of the block header. Depends on what fields/bytes are used in the header)
     \item Usage of second-levels (When not using second-levels, the bitmap is designed as described in Section~\ref{sec:adaptations_impl:bitmap_design}, otherwise the reference implementation is used)
