@@ -1,11 +1,20 @@
 
-This section covers the implementation deteails that are relevant for the adaptations described in the previous section.
+This section covers the implementation details that are relevant for the adaptations described in the previous section.
 
-\subsection{Allocator Versions}
+\subsection{Allocator Configurations}
 
-The reference version of the allocator has been abstracted into a base class named \texttt{TLSFBase}. From the base class, the user must provide a set of configuration variables that define how the allocator behaves. As such, each unique set of configuration variables define a new allocator. Additionally, an allocator may override the implementation of the methods defined in the base class so that computations may be done differently. This allows different versions to apply different methods for allocation and freeing for example, as well as applying different strategies for concurrency.
+The reference implementation of the allocator has been abstracted into a base class named \texttt{TLSFBase}. From the base class, the user must provide a set of configuration variables that define how the allocator behaves, where each unique set of configuration variables define a new allocator. An allocator may override the implementation of the methods defined in the base class so that computations may be done differently. For example, this allows different versions to apply different methods for allocation, freeing and support for concurrency. The configuration variables are:
+
+\begin{enumerate}
+    \item Number of next- and first-levels (Sets the size range granularity and number of free-list)
+    \item Minimum block size (The minimum size of blocks)
+    \item Block header size (The size of the block header. Depends on what fields/bytes are used in the header)
+    \item Usage of second-levels (When not using second-levels, the bitmap is designed as described in Section~\ref{sec:adaptations_impl:bitmap_design}, otherwise the reference implementation is used)
+    \item Usage of deferred coalescing (Deferred coalescing disables immediate coalescing. Coalescing can only be done through explicit coalescing)
+\end{enumerate}
 
 \subsection{New Bitmap Design}
+\label{sec:adaptations_impl:bitmap_design}
 
 Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_range} regarding the number of required first- and second-levels, desire to use a single 64-bit bitmap and large-list, a new representation for the bitmap is constructed, shown in Figure~\ref{fig:bitmap_flattening}. The new bitmap disregards the literal notion of ``two-level'' from Two-Level Segregated Fit and flattens the first- and second-level bitmaps to a single bitmap. The mapping for the bitmap is calculated by combining the first- and second-level mappings, which are calculated the same way as in the reference design. Hence, the mapping for the new bitmap is calculated using the formula below, where $f$ and $s$ are the first- and second-level indexes respectively.
 \[
@@ -73,15 +82,15 @@ In summary, the increase of available memory when applying the block header opti
 \subsection{Concurrency Implementation}
 \label{sec:adaptations_impl:concurrency}
 
-Implementing concurrency for the allocator will require being able to concurrently operate on its free-lists, as it is where blocks are stored and managed. In the reference design, the free-lists are designed as doubly-linked lists. However, lock-free operations on a doubly-linked-list will not be considered due to the complex operations required to support it. Instead, we will simplify the appearance of the free-lists with regard to previously mentioned adaptations to reduce their complexity.
+Implementing concurrency for the allocator will require being able to concurrently operate on its free-lists. The free-lists, in combination with the bitmaps that store data about them, are the critical sections of the allocator. In the reference design, the free-lists are designed as doubly-linked lists. However, lock-free operations on a doubly-linked-list will not be considered due to the complex operations required to support it. Instead, the appearance of the free-lists are simplified to make it easier to support concurrent operations.
 
-By disregarding the pointer to the previous free block inside block headers, the appearance of the free-lists can be transformed from a doubly-linked list to a singly-linked list. This transformation is possible if we limit ourselves to deferred coalescing, since the previous pointer is only used when inserting blocks at positions other than the head of a free-list. Consequently, by only allowing updates at the head of a free-list, the singly-linked list effectively becomes a stack, simplifying the implementation of a lock-free solution.
+By disregarding the pointer to the previous free block inside block headers, the appearance of the free-lists can be transformed from a doubly-linked list to a singly-linked list. This transformation is possible when not coalescing immediately, since the previous pointer is only used when inserting and removing blocks at positions other than the head of a free-list. Consequently, by only allowing updates at the head of a free-list, the singly-linked list effectively becomes a stack, simplifying the implementation of a lock-free solution.
 
-M. Herlihy and N. Shavit~\cite[Chapter 11]{artofmpprogramming} describes the design and inner-workings of a lock-free stack from which the concurrent implementation of the allocator is largely based on. For reference, we will go over how a lock-free stack work and how it connects to the data structure inside the allocator.
+M. Herlihy and N. Shavit~\cite[Chapter 11]{artofmpprogramming} describes the design and inner-workings of a lock-free stack from which the concurrent implementation of the allocator is largely based on. For reference, a general overview of how a lock-free stack work and how it connects to the free-lists inside the allocator is described.
 
-A stack only requires two operations: \texttt{push()} and \texttt{pop()}, which are named \texttt{insert()} and \texttt{remove()} in the allocator to stay consistent with their meaning from the general version. The insert operation replaces the head of the stack, or free-list, with a new block, whilst the remove operation removes the head of the free-list and replaces it with the next block, if any, in the free-list. In order to make the allocator work in a thread-safe manner, we only need to make these two operations concurrent, since all other operations in the allocator can be done independently of other threads.
+A stack only requires two operations: \texttt{push()} and \texttt{pop()}, which are named \texttt{insert()} and \texttt{remove()} in the allocator to stay consistent with their meaning from the general version. The insert operation replaces the head of the stack, or free-list, with a new block, whilst the remove operation removes the head of the free-list and replaces it with the next block, if any, in the free-list. In order to make the allocator work in a thread-safe manner, only these two operations need to be concurrent, since all other operations in the allocator can be done independently of other threads.
 
-To be able to operate on the free-list concurrently without locks, we will use the atomic operations \texttt{load()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/load}} and \texttt{compare\_exchange()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange}}, provided in the C++ standard library. \texttt{load()} returns the current value of an atomic variable and \texttt{compare\_exchange()} compares the value of a variable with an expected value, and if they are equal, it is replaced by another value.
+The free-lists will be operated on concurrently without locks using the atomic operations \texttt{load()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/load}} and \texttt{compare\_exchange()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange}}, provided in the C++ standard library. \texttt{load()} returns the current value of an atomic variable and \texttt{compare\_exchange()} compares the value of a variable with an expected value, and if they are equal, it is replaced by another value.
 
 \subsubsection{Solving The ABA Problem}
 \label{sec:adaptations_impl:aba_problem}
@@ -90,7 +99,9 @@ The ABA problem occurs when a thread employs compare-and-exchange to read a valu
 
 A strategy for solving the ABA problems is ensuring that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, pointers to blocks are not unique in the allocator and can be inserted and removed any number of times. One way to achieve pointer uniqueness is to apply a so-called version tag to each pointer, which makes it possible to uniquely identify pointers.
 
-Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, due to how compare-and-exchange work, it is desirable to store the pointer and version tag in a single word, i.e. 8-bytes on a 64-bit system. When using the allocator for pages in ZGC, this is not a problem as we can apply the same principle as in Section~\ref{sec:adaptations_impl:0-byte-header} to convert 64-bit pointers to 32-bit offsets. This conversion allows storing the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
+Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common and effective solution for the ABA problem. However, due to how compare-and-exchange work, it is desirable to store the pointer and version tag in a single word, i.e. 8-bytes on a 64-bit system. 
+
+When using the allocator for pages in ZGC, this is not a problem as the same principles applied in Section~\ref{sec:adaptations_impl:0-byte-header} can be used to convert 64-bit pointers to 32-bit offsets. This conversion allows storing the version tag in the remaining 32-bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
 
 \begin{figure}[H]
     \centering
@@ -137,8 +148,6 @@ BlockHeader *remove_block(Mapping mapping) {
     return nullptr;
 }
 \end{lstlisting}
-
-% However, for single-threaded use-cases, the worst-case is still bounded, as indicated by the results in Section~\ref{sec:allocation-performance}.
 
 %%% Local Variables:
 %%% mode: latex
