@@ -5,7 +5,16 @@
   url    = {https://openjdk.org/},
   organization = {Oracle},
   note  = "Accessed 2024-03-08"
-  }
+}
+
+@InProceedings{TLSF,
+  author={Masmano, M. and Ripoll, I. and Crespo, A. and Real, J.},
+  booktitle={Proceedings. 16th Euromicro Conference on Real-Time Systems, 2004. ECRTS 2004.}, 
+  title={{TLSF}: a new dynamic memory allocator for real-time systems}, 
+  year={2004},
+  pages={79-88},
+  doi={10.1109/EMRTS.2004.1311009}
+}
 
 @Electronic{hotspot,
   author = {Oracle},
@@ -14,7 +23,7 @@
   url    = {https://www.oracle.com/java/technologies/whitepaper.html},
   organization = {Oracle},
   note  = "Accessed 2024-03-08"
-  }
+}
 
 @Electronic{jvm,
   author = {Oracle},
@@ -23,7 +32,7 @@
   url    = {https://docs.oracle.com/en/java/javase/21/vm/java-virtual-machine-technology-overview.html},
   organization = {Oracle},
   note  = "Accessed 2024-03-08"
-  }
+}
 
 @Electronic{jdk:tag2232,
   author = {Oracle},
@@ -32,7 +41,7 @@
   url    = {https://github.com/openjdk/jdk/releases/tag/jdk-22%2B32},
   organization = {Oracle},
   note  = "Accessed 2024-05-07"
-  }
+}
 
 @book{gchandbook,
   title     = "The garbage collection handbook",
@@ -40,15 +49,6 @@
   publisher = "Chapman \& Hall/CRC",
   edition   =  2,
   year      =  2023,
-}
-
-@InProceedings{TLSF,
-    author={Masmano, M. and Ripoll, I. and Crespo, A. and Real, J.},
-    booktitle={Proceedings. 16th Euromicro Conference on Real-Time Systems, 2004. ECRTS 2004.}, 
-    title={{TLSF}: a new dynamic memory allocator for real-time systems}, 
-    year={2004},
-    pages={79-88},
-    doi={10.1109/EMRTS.2004.1311009}
 }
 
 @article{zgc_deep_dive,
@@ -223,7 +223,6 @@ pages = {184–195},
 numpages = {12}
 }
 
-<<<<<<< HEAD
 @article{samsung_gc_free_list,
 title = {A garbage collection policy based on empirical behavior},
 journal = {Information Sciences},
@@ -238,97 +237,23 @@ author = {Woo Hyong Lee and J.Morris Chang},
 }
 
 @article{zgc:deep_dive,
-author = {Yang, Albert Mingkun and Wrigstad, Tobias},
-title = {Deep Dive into ZGC: A Modern Garbage Collector in OpenJDK},
-year = {2022},
-issue_date = {December 2022},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {44},
-number = {4},
-issn = {0164-0925},
-url = {https://doi.org/10.1145/3538532},
-doi = {10.1145/3538532},
-abstract = {ZGC is a modern, non-generational, region-based, mostly concurrent, parallel, mark-evacuate collector recently added to OpenJDK. It aims at having GC pauses that do not grow as the heap size increases, offering low latency even with large heap sizes. The ZGC C++ source code is readily accessible in the OpenJDK repository, but reading it (25 KLOC) can be very intimidating, and one might easily get lost in low-level implementation details, obscuring the key concepts. To make the ZGC algorithm more approachable, this work provides a thorough description on a high-level, focusing on the overall design with moderate implementation details. To explain the concurrency aspects, we provide a SPIN model that allows studying races between mutators and GC threads, and how they are resolved in ZGC. Such a model is not only useful for learning the current design (offering a deterministic and interactive experience) but also beneficial for prototyping new ideas and extensions. Our hope is that our detailed description and the SPIN model will enable the use of ZGC as a building block for future GC research, and research ideas implemented on top of it could even be adopted in the industry more readily, bridging the gap between academia and industry in the context of GC research.},
-journal = {ACM Trans. Program. Lang. Syst.},
-month = {sep},
-articleno = {22},
-numpages = {34},
-keywords = {model checking, SPIN, ZGC, Garbage collection}
+  author = {Yang, Albert Mingkun and Wrigstad, Tobias},
+  title = {Deep Dive into ZGC: A Modern Garbage Collector in OpenJDK},
+  year = {2022},
+  issue_date = {December 2022},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  volume = {44},
+  number = {4},
+  issn = {0164-0925},
+  url = {https://doi.org/10.1145/3538532},
+  doi = {10.1145/3538532},
+  journal = {ACM Trans. Program. Lang. Syst.},
+  month = {sep},
+  articleno = {22},
+  numpages = {34},
+  keywords = {model checking, SPIN, ZGC, Garbage collection}
 }
-
-@Book(dawson:projects-in-computing
-  ,author	= {Christian W. Dawson}
-  ,title 	= {Projects in Computing and Information Systems}
-  ,publisher 	= {Pearson}
-  ,year 	= 2015
-  ,address	= {Harlow, UK}
-  ,edition	= {3rd edition}
-)
-@Book(dawson:projects-in-computing-old
-  ,author	= {Christian W. Dawson}
-  ,title 	= {Projects in Computing and Information Systems}
-  ,publisher 	= {Pearson}
-  ,year 	= 2009
-  ,address	= {Harlow, UK}
-  ,edition	= {2nd edition}
-)
-
-@Article(twostein:hello-world
-  ,author 	= {Albert Twostein}
-  ,title 	= {Hello World}
-  ,journal 	= {Journal of Silly Statements}
-  ,year 	= 2016
-  ,number 	= {42}
-  ,volume 	= {17}
-  ,pages 	= {11-17}
-)
-
-@Electronic(berners-lee:cool-uris,
-  author = {Tim Berners-Lee},
-  title  = {Cool {URI}s don't change},
-  year   = 1998,
-  url    = {https://www.w3.org/Provider/Style/URI},
-  organization = {W3C},
-  note  = "Hämtad 2018-04-26"
-  )
-
-@Electronic(wp:sprakfel,
-  author = {Wikipedia},
-  title  = {Lista över vanliga språkfel},
-  year   = 2021,
-  month  = apr,
-  url    = {https://sv.wikipedia.org/wiki/Wikipedia:Lista_%C3%B6ver_vanliga_spr%C3%A5kfel},
-  note  = "Hämtad 2021-06-05"
-  )
-
-@Book(whitehead.russel:principia-mathematica
-  ,author	= {Whitehead, Alfred North and Bertrand Russel}
-  ,title 	= {Principia Mathematica}
-  ,publisher 	= {The University Press}
-  ,year 	= 1925
-  ,address	= {Cambridge [England]}
-  )
-
-                  
-@Article(turing:computable-numbers
-  ,author 	= {Turing, A[lan] M[athison]}
-  ,title 	= {On Computable Numbers, with an application to the {E}ntscheidungsproblem}
-  ,journal 	= {Proceedings of the London Mathematical Society}
-  ,year 	= 1937
-  ,volume	= {s2-42}
-  ,number	= 1
-  ,pages	= {230-265}
-  ,url 		= {https://doi.org/10.1112/plms/s2-42.1.230}
-)
-
-@Misc(vr:forskningsetik
-  ,author 	= {Vetenskapsr{\aa}det}
-  ,title 	= {God forskningssed}
-  ,year		= 2017
-  ,note		= {Rapport VR1708}
-  ,url 		= {https://www.vr.se/analys/rapporter/vara-rapporter/2017-08-29-god-forskningssed.html}
-)
 
 %%%% Exempel på entryn från DiVA.
 %%%% Här är url-fältet tillagt, "UX" i titeln lagt inom {} för att det inte ska bli lowercase, och space före kolon som separerar titel från undertitel borttaget i titeln.
@@ -339,7 +264,6 @@ keywords = {model checking, SPIN, ZGC, Garbage collection}
    school = {Umeå University, Department of Applied Physics and Electronics},
    title = {User Experience Design for Children: Developing and Testing a {UX} Framework},
    keywords = {user experience (UX), user interface (UI), interaction design (IxD), graphical user interface (GUI), design, usability, kids, children, minors, teenagers, childhood, guidelines, framework, child centered design (CCD), tablets, smartphones, media, Lego, Star Wars, North Kingdom},
-   abstract = {Designing good digital experiences for children can be difficult; designers have to consider children's cognitive and motor skill limitations, understand their target audience, create something entertaining and educational, comply with national and international jurisdiction, and at the same time appeal to parents. We set out to create a general framework which designers and developers can use as a foundation and testing ground for their digital products in the field of user experience. The methods used during the thesis include interviews, literature studies, user testing, case studies, personas, prototyping, and more. The results created are primarily user experience guidelines packaged in a Theoretical Framework, user testing conclusions, along with suggestions on improving the current Lego Star Wars: Force Builders application, a few in the form of prototypes. },
    year = {2016},
    url = {http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-125935}
 }
@@ -360,4 +284,22 @@ journal = {SIGPLAN Not.},
 month = {feb},
 pages = {141–150},
 numpages = {10},
+}
+
+%%%% Här är entrytypen ändrad från misc till techreport, fältet "series" ändrat till "type", url-fältet tillagt,
+%%%% och "DreamScape" i titeln lagd inom {} för att bevara CamelCaps.
+%%%% Av någon anledning lägger DiVA in flera "school"-fält. Ta bort de extra om varningarna stör.
+@techreport{Alstergren1439802,
+   author = {Alstergren, Iza and Andersson, Andreas and Hedman, Lovisa and Maric, Daniela},
+   institution = {Uppsala University, Department of Information Technology},
+   pages = {41},
+   school = {Uppsala University, Department of Information Technology},
+   school = {Uppsala University, Department of Information Technology},
+   school = {Uppsala University, Department of Information Technology},
+   school = {Uppsala University, Department of Information Technology},
+   title = {{DreamScape}, a Platform for Creating, Sharing and Listening to Interactive Stories},
+   type = {Självständigt arbete i informationsteknologi},
+   number = {2020-007},
+   year = {2020},
+   url = {http://urn.kb.se/resolve?urn=urn:nbn:se:uu:diva-413015}
 }

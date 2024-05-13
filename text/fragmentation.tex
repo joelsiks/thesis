@@ -1,5 +1,5 @@
 
-We classify fragmentation as being either internal or external. Internal fragmentation is considered wasted space due to alignment, which may sometimes be required for an allocator to allocate a slightly larger block of memory than a user has requested. Figure~\ref{fig:internal_fragmentation} shows an example of when a user has requested 100 bytes, where the allocator has instead allocated 128 bytes due to alignment. The last 28 bytes are considered wasted space, or internal fragmentation, as the user will not use them.
+We classify fragmentation as being either internal or external. Internal fragmentation is considered wasted space due to alignment, which allocates extra memory to meet requirements by the allocator or hardware for example. Figure~\ref{fig:internal_fragmentation} shows an example of when a user has requested 100 bytes, where the allocator has instead allocated 128 bytes to make the total size a multiple of 16 to meet requirements by the allocator. The last 28 bytes are considered wasted space, or internal fragmentation, as the user will not know of its existence and will end up being unused.
 
 \begin{figure}[H]
     \centering
@@ -10,7 +10,7 @@ We classify fragmentation as being either internal or external. Internal fragmen
     \label{fig:internal_fragmentation}
 \end{figure}
 
-External fragmentation occurs when there is enough memory available in total, but dispersed in smaller, non-contiguous chunks. This is illustrated in Figure~\ref{fig:external_fragmentation}, where a total of 80 bytes is available but distributed across the memory region. Consequently, the user is limited to allocating a maximum of 32 bytes, as the single largest contiguous chunk of memory is of this size.
+External fragmentation occurs when there is enough memory available to satisfy a request, but dispersed in smaller non-contiguous chunks, making them unusable for larger request sizes. This is illustrated in Figure~\ref{fig:external_fragmentation}, where a total of 80 bytes is available but distributed across the memory region. Consequently, the largest allocation that the system can accommodate is 32 bytes, as the single largest contiguous chunk of memory is of this size.
 
 \begin{figure}[H]
     \centering
@@ -18,11 +18,11 @@ External fragmentation occurs when there is enough memory available in total, bu
     \hspace*{1.2cm}
     \includesvg[width=0.9\textwidth]{figures/external_fragmentation.svg}
     \vspace*{0.2cm}
-    \caption{A memory region containing several allocated blocks with unused space in between them. Although the total sum of the unused portions is large, a request of more than 32 bytes cannot be fulfilled.}
+    \caption{A memory region containing several allocated blocks with unused space between them. Although the total sum of the unused portions is 80 bytes, a single request of more than 32 bytes cannot be fulfilled.}
     \label{fig:external_fragmentation}
 \end{figure}
 
-Effectively managing and reducing fragmentation is crucial for optimizing memory usage in long-running programs. Excessive fragmentation can hinder the system's ability to efficiently allocate contiguous blocks of memory for new objects.
+Effectively managing and reducing fragmentation is crucial for optimizing memory usage in long-running programs~\cite{gchandbook}. For example, if fragmentation becomes too large, the system may not be able to satisfy allocation requests and be forced to either collect garbage sooner than necessary, or terminate if not using a garbage collector~\cite{gchandbook}.
 
 %%% Local Variables:
 %%% mode: latex

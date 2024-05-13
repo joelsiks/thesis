@@ -1,13 +1,13 @@
 
-In this section we will describe two fundamental memory allocation strategies, called sequential allocation and free-list allocation. Additionally, we will discuss the more complex case of using multiple free-lists, called segregated-fits.
+In this section we describe two fundamental memory allocation strategies, called sequential allocation and free-list allocation~\cite{gchandbook}. Additionally, we discuss the more complex case of using multiple free-lists, called segregated-fits.
 
 \subsubsection{Sequential Allocation}
 \label{sec:seq_allocation}
 \label{sec:bump_pointer}
 
-Sequential allocation is a method used for allocating memory within a contiguous chunk of memory. In this approach, a pointer is used to track the current position within the memory chunk. As new objects are allocated, the pointer is advanced by the size of the object, along with any necessary padding or alignment. It is a simple and efficient method, particularly suitable for scenarios where memory is managed linearly. Despite its simplicity, it is also highly effective in situations where memory fragmentation is not a significant concern and where a predictable, sequential layout is desirable.
+Sequential allocation is a method used for allocating memory within a contiguous chunk of memory. In this approach, a pointer is used to track the current position within the memory chunk. As new objects are allocated, the pointer is advanced by the size of the object, along with extra memory that might be needed for alignment purposes. For this reason, sequential allocation is also known as bump-pointer allocation due to the incremental ``bumping'' of the pointer with each new allocation. 
 
-This approach may not be the most suitable choice for all scenarios, particularly in systems with fluctuating memory demands or those requiring more advanced memory management strategies. Nevertheless, its simplicity makes sequential allocation a valuable technique in specific use cases. Sequential allocation is also known as bump-pointer allocation due to the incremental ``bumping'' of the pointer with each new allocation. 
+This approach is simple and efficient, and is highly effective in situations where memory fragmentation is not a significant concern and where a predictable, sequential layout is desirable. However, it may not be the most suitable choice for all scenarios, especially where memory is not available in a large contiguous chunk. In that case, a more sophisticated memory management strategy might be required. 
 
 \subsubsection{Free-List Allocation}
 
@@ -15,9 +15,9 @@ An alternative to sequential allocation is free-list allocation, which involves 
 
 \begin{description}
     \item[First-fit]
-        The first block in the free-list that is large enough to fulfill the memory allocation request is selected. This method minimizes search time but does not consider the possibility of a more suitable block elsewhere in the list. Consequently, the search restarts from the beginning of the list for each new request.
+        The first block in the free-list that is large enough to fulfill the memory allocation request is selected. This method minimizes search time but does not consider the possibility of a more suitable block elsewhere in the list. This often leads to more fragmentation than is necessary, because blocks are split more often. New requests restart their search from the beginning of the list.
     \item[Next-fit]
-        The search for a suitable block begins in the free-list, following a similar process to that described for first-fit. However, in subsequent searches, it resumes from where the previous search ended, improving efficiency when locating a new block. This strategy is based on the observation that smaller blocks tend to accumulate at the beginning of the free-list, optimizing the search process by starting further into the list in each iteration.
+        The search for a suitable block begins in the free-list, following a similar process to that described for first-fit. However, in subsequent searches, it resumes from where the previous search ended, improving efficiency when locating a new block. This strategy is based on the observation that smaller blocks tend to accumulate at the beginning of the free-list~\cite{gchandbook}, optimizing the search process by starting further into the list in each iteration.
     \item[Best-fit]
         The entire free-list is searched until the smallest available block that can fulfill a request is located. This method minimizes fragmentation by selecting the block that best matches the size of the requested memory, but it comes with the trade-off of increased search time.
 \end{description}
@@ -25,9 +25,10 @@ An alternative to sequential allocation is free-list allocation, which involves 
 The three policies described above have in common that when a block that is larger than requested is found, it is split up. Blocks are generally desired to be split as infrequently as possible to have larger blocks available for larger requests. If blocks are split too often, many small blocks might accumulate, which might increase external fragmentation to a level where new requests cannot be fulfilled. Additionally, splitting blocks less frequently will also mean less merging, or coalescing, of blocks to larger sizes, which could improve performance.
 
 \subsubsection{Segregated-Fits Allocation}
-Instead of using a single free-list where blocks of many sizes are stored, one might instead use multiple free-lists that store blocks of similar sizes or size ranges, called segregated-fits. The ambition of using multiple free-lists is to narrow down the search space to fewer blocks, allowing us to find blocks large enough to satisfy a request faster. However, there is an added overhead of storing a pointer to the head of each free-list which is usually insignificant compared to the gain in performance. It is crucial to note that blocks are logically segregated into their respective free-lists based on size but are not required to be physically adjacent in memory within the same free-list. This distinction emphasizes the organizational structure of segregated-fits.
 
-Segregated-fits is often employed in real-time systems where predictable and efficient memory allocation is crucial. The reduced search space and minimized search time to find suitable blocks allows timing constraints to be met.
+Instead of using a single free-list where blocks of many sizes are stored, multiple free-lists that store blocks of similar sizes or size ranges can instead be used, called segregated-fits. The goal of using multiple free-lists is to narrow down the search space to fewer blocks, minimizing the time to find blocks large enough to satisfy a request. It is crucial to note that blocks are logically segregated into their respective free-lists based on size but are not required to be physically adjacent in memory within the same free-list. 
+
+Segregated-fits is often employed in real-time systems where predictable and efficient memory allocation is crucial~\cite{gchandbook, TLSF}. The reduced search space and minimized search time to find suitable blocks increase the probability of timing constraints being met.
 
 %%% Local Variables:
 %%% mode: latex
