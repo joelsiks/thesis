@@ -1,14 +1,9 @@
 
-The Java programming language manages memory automatically through the use of a garbage collector. One such collector is ZGC, which allocates memory inside regions using a method called bump-pointer allocation, which suffers from fragmentation. To address this challenge, ZGC employs memory relocation techniques to cleverly move memory to reduce fragmentation, which is not always possible nor cheap to do. This thesis proposes to use an alternative memory allocation method leveraging free-lists to efficiently manage and allocate into fragmented memory.\\
+The Java programming language manages memory automatically through the use of a garbage collector. One such collector is ZGC, which allocates memory inside regions using a method called bump-pointer allocation. Although efficient, this method can lead to fragmentation over time. To address this issue, ZGC employs memory relocation techniques to move allocated memory, which is not always possible or efficient to do. This thesis proposes an alternative memory allocation method that leverages free-lists to efficiently manage and allocate fragmented memory, reducing the need for relocation.\\
 
-Drawing inspiration from the TLSF memory allocator, this thesis presents an optimized version tailored for ZGC. Through exploration of ZGC's operational boundaries, opportunities for enhancements in performance and memory efficiency are identified. While time constraints prevent direct integration into ZGC, a comparative evaluation against a reference implementation is conducted. Results show that the optimized allocator performs on-par with the reference design for single allocations, and is slightly slower for single frees and applying allocation patterns from real-world programs. The largest adaptation is the introduction of the 0-byte header, leveraging overlapping information in the garbage collector to minimize internal fragmentation to levels identical to bump-pointer allocation.\\
+Drawing inspiration from the TLSF memory allocator, an allocator tailored for ZGC is presented. Research on the customization of allocators shows varying results, but does not account for usage in more complex environments like a garbage collector.\\
 
-% Memory allocation
-% Java, GC, ZGC
-% TLSF, this work, aim
-% Adaptations
-% Evaluation
-% Results
+Through the exploration of ZGC's operational boundaries, opportunities for enhancements in performance and memory efficiency are identified and implemented. The most significant adaptation is the introduction of the 0-byte header, which leverages information in the garbage collector to minimize internal fragmentation to levels identical to bump-pointer allocation. The allocator is not integrated into ZGC; instead, a comparative evaluation against a reference implementation is conducted. Results show that the optimized allocator performs on par with the reference design for single allocations but is slightly slower for single frees and when applying allocation patterns from real-world programs. The findings of this work suggest that customizing allocators for garbage collection is worth considering and may be useful for future integration.\\
 
 %%% Local Variables:
 %%% mode: latex
