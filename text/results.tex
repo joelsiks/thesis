@@ -20,7 +20,7 @@ In contrast, the benchmark result of the single free benchmark is shown in Figur
     \label{fig:free_performance}
 \end{figure}
 
-The ratio between allocations and frees for the patterns collected from real-world programs are shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with NULL as argument, i.e \texttt{free(nullptr)}. The reason this is highlighted is since calling free on a nullptr returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
+The ratio between allocations and frees for the patterns collected from real-world programs is shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with \texttt{nullptr} as an argument, i.e. \texttt{free(nullptr)}. The reason this is highlighted is that calling free on a \texttt{nullptr} returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
 
 \begin{figure}[H]
     \centering
@@ -55,7 +55,7 @@ Performance results of applying patterns of allocations and frees are shown in F
 
 \subsection{Internal Fragmentation}
 
-The size of the block header for the different versions are: 32 bytes, of which 16 bytes can be used by allocated blocks for the reference version; 32 bytes for the general version; and 0 bytes for the optimized version. 
+The sizes of the block headers for the different versions are 32 bytes, of which 16 bytes can be used by allocated blocks for the reference version; 32 bytes for the general version; and 0 bytes for the optimized version. 
 
 In the worst case with maximum padding necessary, the reference version will waste up to 57.5\%, general version 69.6\% and the optimized version 29.2\%, if filling the heap with as many allocations as possible of 17 bytes. Looking at the second case where there is no padding necessary for alignment, the reference version will waste up to 50\%, general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
 
