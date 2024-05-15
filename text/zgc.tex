@@ -1,7 +1,5 @@
 
-ZGC is a garbage collector available in the OpenJDK. It was introduced as an experimental feature in OpenJDK 11, and declared production ready in OpenJDK 15. ZGC is modern, generational, region-based, concurrent garbage collector that aims to keep pause times constant at any given heap size. This means latency will remain low as the heap size increases.
-
-The following sections will cover the basics of how ZGC allocates data and how it is able to dynamically collect garbage. The information is based partly on an overview by A. M. Yang and T. Wrigstad~\cite{zgc_deep_dive} and partly on the source code of ZGC itself, as available in OpenJDK version 22.32~\cite{jdk:tag2232}.
+The following sections will cover the basics of how ZGC allocates data and how it can dynamically collect garbage. The information is based partly on an overview by A. M. Yang and T. Wrigstad~\cite{zgc:deep_dive} and partly on the source code of ZGC itself, as available in OpenJDK version 22.32~\cite{jdk:tag2232}.
 
 %%% Local Variables:
 %%% mode: latex

@@ -93,8 +93,8 @@
 
 % Visa datum på svenska på förstasidan, även om ni skriver på engelska!
 \date{\begin{otherlanguage}{swedish}  %\foreignlanguage doesn't seem to affect \today?
-Juni 2024
-\end{otherlanguage}}
+    Juni 2024
+  \end{otherlanguage}}
 
 % Använd detta om året för rapporten inte är innevarande år
 %\year=2018
@@ -116,11 +116,11 @@ Juni 2024
 %%%% men använd inte samma filnamn!
 
 \begin{abstract}
-\input{text/abstract}
+  \input{text/abstract}
 \end{abstract}
 
 \begin{sammanfattning}
-\input{text/sammanfattning}
+  \input{text/sammanfattning}
 \end{sammanfattning}
 
 % Innehållsförteckningen här.
@@ -178,13 +178,13 @@ Juni 2024
 \input{text/memory_allocation}
 
 \newpage
-\subsection{OpenJDK}
-\label{sec:openjdk}
-\input{text/openjdk}
-
 \subsection{Garbage Collection}
 \label{sec:gc}
 \input{text/GC}
+
+\subsection{OpenJDK}
+\label{sec:openjdk}
+\input{text/openjdk}
 
 \subsection{The Z Garbage Collector}
 \label{sec:zgc}
@@ -265,20 +265,20 @@ Juni 2024
 % Om ni har ett index
 \makeatletter
 \renewenvironment{theindex}
-               {\if@twocolumn
-                  \@restonecolfalse
-                \else
-                  \@restonecoltrue
-                \fi
-                \twocolumn[\section{\indexname}]%
-                \@mkboth{\MakeUppercase\indexname}%
-                        {\MakeUppercase\indexname}%
-                \thispagestyle{plain}\parindent\z@
-                \parskip\z@ \@plus .3\p@\relax
-                \columnseprule \z@
-                \columnsep 35\p@
-                \let\item\@idxitem}
-               {\if@restonecol\onecolumn\else\clearpage\fi}
+{\if@twocolumn
+    \@restonecolfalse
+  \else
+    \@restonecoltrue
+  \fi
+  \twocolumn[\section{\indexname}]%
+  \@mkboth{\MakeUppercase\indexname}%
+  {\MakeUppercase\indexname}%
+  \thispagestyle{plain}\parindent\z@
+  \parskip\z@ \@plus .3\p@\relax
+  \columnseprule \z@
+  \columnsep 35\p@
+  \let\item\@idxitem}
+{\if@restonecol\onecolumn\else\clearpage\fi}
 \makeatother
 \printindex
 \end{document}

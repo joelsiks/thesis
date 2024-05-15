@@ -1,5 +1,5 @@
 
-ZGC is a region-based garbage collector, which allocates objects inside units of memory that are referred to as pages in ZGC. New objects are allocated inside pages with respect to their size. Pages are classified as one of the three different types: \textit{Small}, \textit{Medium} or \textit{Large}, which support allocations of different size ranges, as specified in Table~\ref{table:zpage_sizes}. All allocations are aligned to 8 bytes and the smallest supported allocation size is, at the time of writing, 16 bytes. As a result of all allocations having the same alignment, their offset from the start of the page will also be a multiple of the alignment.
+ZGC is a region-based garbage collector which allocates objects inside differently-sized regions of memory that are referred to as pages. When new objects are created, they are allocated inside pages with respect to their size. Pages are classified as one of three different types: \textit{Small}, \textit{Medium} or \textit{Large}, which support allocations of different size ranges, as specified in Table~\ref{table:zpage_sizes}. All allocations are aligned to 8 bytes and the smallest supported allocation size is, at the time of writing, 16 bytes. As a result of all allocations having the same alignment, their offset from the start of the page will also be a multiple of 8 bytes.
 
 \begin{table}[H]
     \centering
@@ -13,27 +13,26 @@ ZGC is a region-based garbage collector, which allocates objects inside units of
     \label{table:zpage_sizes}
 \end{table}
 
-Pages in ZGC keep track of information that allow them to efficiently allocate new memory and work concurrently with multiple threads. An overview of this information is shown in Figure~\ref{fig:zpages}, where the most important attributes are the: \textit{Bump Pointer}, \textit{Live Map}, \textit{Sequence Number}, and \textit{Age}, which are explained in detail below.
+Pages in ZGC include metadata that allows them to perform allocations efficiently, as well as ensure safe execution while running concurrently executing threads. An overview of this metadata is shown in Figure~\ref{fig:zpages}, where the most important attributes are the: \textit{Bump Pointer}, \textit{Live Map}, \textit{Sequence Number}, and \textit{Age}, which are explained in detail below.
 
 \begin{description}
     \item[Bump Pointer]
-        The bump pointer points to the location where new allocations are made inside the page. Its functionality and use-case is explained in greated detail in Section~\ref{sec:bump_pointer}. All allocations inside pages in ZGC are currently done using bump pointers.
+        The bump pointer is a pointer within the page's memory range that stores the location of where new allocations are made inside the page. Its functionality and use-case are explained in detail in Section~\ref{sec:bump_pointer}. All allocations inside pages in ZGC are currently done using bump pointers. In Figure~\ref{fig:zpages}, the bump pointer is displayed below four allocated objects, indicating that the next position to allocate objects at would be below the fourth object.
 
     \item[Live Map]
-        The live map is used to keep track of which objects are currently live and have been marked as reachable by the program. Objects not marked in the live map are considered dead and can be reclaimed by the GC. The live map is illustrated on the right-hand side of Figure~\ref{fig:zpages}. It is constructed during the marking phase of the GC cycle as live objects are encountered during memory traversal and stored in a bitmap. Each bit is mapped to an 8 byte chunk of the page and if a bit is set, there is a live object at the corresponding place in the page. The data collected in the live map is later used during the compacting phase, which will contain knowledge about what objects can be reclaimed.
-
+        The live map is used to keep track of which objects are currently live and have been marked as reachable by the program. Objects not marked in the live map are considered dead. The live map is shown on the right-hand side of Figure~\ref{fig:zpages}. It is constructed during the marking phase of the GC cycle as live objects are encountered during memory traversal and marked in the live map. The live map is represented by a bitmap, where each bit is mapped to an 8-byte chunk of the page. If a bit is set, there is a live object at the corresponding address on the page. The live map is used during the compacting phase of the GC in order to know how much memory is alive inside the page.
         \newpage
     \item[Sequence Number]
-        Every page has a sequence number denoting during which GC cycle it was created. New allocations are exclusively done in pages created after the latest GC cycle. Pages which created before the current GC cycle are therefore separated from new ones, allowing the GC to work concurrently while the program is executing. For example, if the current Java program has performed 5 GC cycles, any allocations after that will be exclusively done on pages with sequence number 5. If the program decides to run a 6th cycle, only garbage from pages with sequence number 0 through 5 will be collected, and new allocations are done on pages with sequence number 6.
+        Every page has a sequence number denoting during which GC cycle it was created. If the GC is on its $N$th cycle, pages created during that GC cycle will have a sequence number $N$. Pages with sequence number $N$ are called \textit{allocating} pages, and are the only pages which allocate new objects for mutator threads. Pages with a sequence number below the current GC cycle, $0$--$N-1$ are called \textit{relocatable} pages since there will be no additional allocations done inside them during the GC cycle, and garbage can be reclaimed with the use of relocation. For example, if the current Java program has performed 5 GC cycles, any allocations after that will be exclusively done on pages with sequence number 5. If the program decides to run a 6th cycle, only garbage from pages with sequence numbers 0 through 5 will be collected, and new allocations will be done on pages with sequence number 6.
 
     \item[Age]
-        ZGC is a generational garbage collector, meaning it treats objects of varying age differently to improve performance. This is based on the observation that most objects survive for only a short period of time and those that survive for longer tend to live for a long time. ZGC applies this approach on a page-by-page basis, where all allocations on a page share the same age, which is conveniently stored on each page instead for every object. Objects are grouped into three different age categories: \textit{Eden}, \textit{Survivor} and \textit{Old}. The \textit{Eden} age is for first-time allocation, \textit{Survivor} signifies objects that have survived one or more GC cycles and \textit{Old} those that have survived a threshold of cycles in the \textit{Survivor} age. Classifying pages this way allows the GC to treat pages of a certain age differently, which is especially useful for \textit{Eden} pages, which tend to accumulate garbage quickly.
+        ZGC is a generational garbage collector, meaning it treats objects of varying ages differently to improve performance. This is based on the observation that most objects survive for only a short period and those that survive for longer tend to live for a long time. ZGC applies this approach on a page-by-page basis, where all allocations on a page share the same age, which is conveniently stored on each page instead of for every object. Objects are grouped into three different age categories: \textit{Eden}, \textit{Survivor} and \textit{Old}. The \textit{Eden} age is for first-time allocation, \textit{Survivor} signifies objects that have survived one or more GC cycles and \textit{Old} those that have survived a threshold of cycles in the \textit{Survivor} age. Classifying pages this way allows the GC to treat pages of a certain age differently, which is especially useful for \textit{Eden} pages, which tend to accumulate garbage quickly.
 \end{description}
 
 \begin{figure}[H]
     \centering
     \includesvg[scale=0.8]{figures/zpage_withage.svg}
-    \caption{Illustration of a page in ZGC showing what kind of metadata is kept track of to facilitate allocation and object bookkeeping. The page contains three live objects marked in green and with the corresponding bit set in the live map to the right.} 
+    \caption{Illustration of a page in ZGC showing what kind of metadata is kept track of to facilitate allocation and object bookkeeping. The page contains three live objects marked in green and with the corresponding bit set in the live map to the right. Red objects are previously allocated objects which have since become unreachable garbage memory.} 
     \label{fig:zpages}
 \end{figure}
 
@@ -44,9 +43,9 @@ Figure~\ref{fig:zgc_timeline} shows a timeline of a garbage collection cycle in 
 \vspace*{-0.4cm}
 
 \begin{enumerate}[label=\alph*)]
-    \item The initial state of the heap before the first GC cycle. The left page has about 30\% free memory and the right page has about 50\%. The current cycle is 1, as shown by the digit on the top left of each page.
-    \item The GC cycle has started, and the old pages have been frozen. New allocations are now done on new pages instead of old ones. The old pages that have been frozen are blue and new pages containing a sequence number are gray.
-    \item The GC has finished the marking phase and now have liveness data that indicate where live objects are allocated inside pages.
+    \item The initial state of the heap before the GC cycle starts. The left page has about 30\% free memory and the right page has about 50\%. The current GC cycle is 1, which tells us that pages with sequence number 1 are allocating objects.
+    \item The GC cycle has started, and the old pages have been locked. New allocations are now done on new pages instead of the old ones. The old pages are now guaranteed to not allocate any new objects, which makes it possible for the marking phase to begin to traverse the live objects.
+    \item The GC has finished the marking phase and now has liveness data that indicate where live objects are allocated inside the relocatable pages.
 \end{enumerate}
 
 \vspace*{-0.4cm}
@@ -56,21 +55,21 @@ Figure~\ref{fig:zgc_timeline} shows a timeline of a garbage collection cycle in 
     \begin{subfigure}[t]{.214\textwidth}
         \centering
         \includesvg[width=1\textwidth]{figures/zrel1.svg}
-        \caption{Initial state of the heap before the first GC cycle.}
+        \caption{Initial state of the heap before the first GC cycle. The gray color indicates the page is allocating objects.}
         \label{fig:zrel1}
     \end{subfigure}
     \hfill\vline\hfill
     \begin{subfigure}[t]{.32\textwidth}
         \centering
         \includesvg[width=1\textwidth]{figures/zrel2.svg}
-        \caption{The state of the heap after marking has started.}
+        \caption{The state of the heap after marking has started. The blue color indicates that the page is no longer being allocated on.}
         \label{fig:zrel2}
     \end{subfigure}
     \hfill\vline\hfill
     \begin{subfigure}[t]{.32\textwidth}
         \centering
         \includesvg[width=1\textwidth]{figures/zrel3.svg}
-        \caption{The state of the heap after all live objects are marked.}
+        \caption{The state of the heap after all live objects are marked. The red and green colors indicate that the marking phase has finished, and the pages have liveness data that explain where live objects(green) are located}.
         \label{fig:zrel3}
     \end{subfigure}
     \caption{Timeline of a garbage collection cycle, showing the state of the heap in the different phases.}
@@ -79,7 +78,7 @@ Figure~\ref{fig:zgc_timeline} shows a timeline of a garbage collection cycle in 
 
 \vspace*{-0.49cm}
 
-ZGC frees memory marked as garbage by copying live objects from one page to another and re-purposing the source page for new allocations. This leads to the fragmented layout of allocated memory to be compacted which makes it possible to fit objects from multiple pages into a single one. The process of copying live objects is referred to as relocation. When performing relocation, there are two different scenarios that can occur. The first scenario, where a successful relocation is done by copying items to a new page, is illustrated in Figure~\ref{fig:zrel_new}. This type of relocation requires the heap to have enough free space available to create a new page during the time of relocation. Figure~\ref*{fig:zrel_new1} shows a newly created page, and in Figure~\ref*{fig:zrel_new3}, the old page is freed from memory. The total amount of memory is not decreased, but results in a compacted layout with minimal fragmentation.
+ZGC frees memory marked as garbage by copying live objects from one page to another and re-purposing the source page for new allocations. This leads to the fragmented layout of allocated memory to be compacted which makes it possible to fit objects from multiple pages into a single one. The process of copying live objects is referred to as relocation. When performing relocation, two different scenarios can occur. Either the heap has enough free memory to allocate a new page of contiguous free memory to relocate objects to, or the heap is full, requiring the objects to be compacted into the same page that they are already located in, called in-place compaction. The first scenario is illustrated in Figure~\ref{fig:zrel_new}. This requires the heap to have enough free space available to create a new page during the time of relocation. The GC can reclaim garbage memory by relocating live objects from sparsely populated pages into a more dense configuration inside a new page. The fragmentation and also total heap usage is therefore reduced.
 
 \begin{figure}[H]
     \centering
@@ -114,21 +113,21 @@ ZGC frees memory marked as garbage by copying live objects from one page to anot
     \label{fig:zrel_new}
 \end{figure}
 
-In the previous example, relocation was successful in allocating a new page to relocate objects into. If the heap does not have enough space for a new page, the GC will instead resort to performing an in-place compaction. An in-place compaction is an expensive operation re-arranges the objects of a page without a separate page as a destination. It requires the thread performing the re-arrangement to write to the memory of the page while other threads may read its contents. To do this safely, any threads trying to read from the page during this process must be paused, which removes concurrent execution of the page. The process of in-place compaction of a page is illustrated in Figure~\ref{fig:zrel_in}.
+Typically, many sparsely populated pages can be compacted onto a single new page, but this is conditional on there being enough memory to allocate the new page. Since we are starting GC as a reaction to high memory pressure, this may not always be the case. If a new page cannot be allocated, the first page is "created" by compacting its objects in-place, and then continuing by relocating the live objects of other pages onto that page. An in-place compaction is an expensive operation that re-arranges the objects of a page without a separate page as a destination. It requires the thread performing the re-arrangement to write to the memory of the page while other threads may read its contents. To do this safely, any threads trying to read from the page during this process must be paused, which removes concurrent execution of the page. The process of in-place compaction of a page is illustrated in Figure~\ref{fig:zrel_in}.
 
 \begin{figure}[H]
     \centering
     \begin{subfigure}[t]{.2\textwidth}
         \centering
         \includesvg[width=1\textwidth,height=1.2885\textwidth]{figures/zrel_in1.svg}
-        \caption{The first live object in the page is moved to the start of the page.}
+        \caption{The first live object on the page is moved to the start of the page.}
         \label{fig:zrel_in1}
     \end{subfigure}
     \hfill\vline\hfill
     \begin{subfigure}[t]{.2\textwidth}
         \centering
         \includesvg[width=1\textwidth,height=1.2885\textwidth]{figures/zrel_in2.svg}
-        \caption{The second live objects is moved as close to the start as possible.}
+        \caption{The second live object is moved as close to the start as possible.}
         \label{fig:zrel_in1}
     \end{subfigure}
     \hfill\vline\hfill

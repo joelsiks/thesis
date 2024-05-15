@@ -1,5 +1,5 @@
 
-In this section we describe two fundamental memory allocation strategies, called sequential allocation and free-list allocation~\cite{gchandbook}. Additionally, we discuss the more complex case of using multiple free-lists, called segregated-fits.
+In this section, we describe two fundamental memory allocation strategies, called sequential allocation and free-list allocation~\cite{gchandbook}. Additionally, we discuss the more complex case of using multiple free-lists, called segregated-fits.
 
 \subsubsection{Sequential Allocation}
 \label{sec:seq_allocation}
@@ -7,7 +7,7 @@ In this section we describe two fundamental memory allocation strategies, called
 
 Sequential allocation is a method used for allocating memory within a contiguous chunk of memory. In this approach, a pointer is used to track the current position within the memory chunk. As new objects are allocated, the pointer is advanced by the size of the object, along with extra memory that might be needed for alignment purposes. For this reason, sequential allocation is also known as bump-pointer allocation due to the incremental ``bumping'' of the pointer with each new allocation. 
 
-This approach is simple and efficient, and is highly effective in situations where memory fragmentation is not a significant concern and where a predictable, sequential layout is desirable. However, it may not be the most suitable choice for all scenarios, especially where memory is not available in a large contiguous chunk. In that case, a more sophisticated memory management strategy might be required. 
+This approach is simple and efficient and is highly effective in situations where memory fragmentation is not a significant concern and where a predictable, sequential layout is desirable. However, it may not be the most suitable choice for all scenarios, especially where memory is not available in a large contiguous chunk. In that case, a more sophisticated memory management strategy might be required. 
 
 \subsubsection{Free-List Allocation}
 
