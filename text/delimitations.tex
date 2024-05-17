@@ -1,7 +1,7 @@
 
 The main delimitation of this project is that the allocator will not be integrated into ZGC and OpenJDK, which would provide an optimal way of testing the suitability of the allocator.
 
-Additionally, the allocator will be adapted solely for small pages of ZGC. The most common allocation sizes end up on small pages, making them a suitable target for adaptation. Small pages work similarly to medium pages, meaning that supporting medium pages in the future would not be too difficult. Large pages, reserved for extremely large single allocations, are considered irrelevant as they are used for single object allocations and do not benefit from using free-lists.
+Additionally, the allocator will be adapted solely for small pages of ZGC. The most common allocation sizes end up on small pages, making them a suitable target for adaptation. Small pages work similarly to medium pages, suggesting that supporting medium pages in the future would not be too difficult. Large pages, reserved for extremely large single allocations, are considered irrelevant as they are used for single object allocations and do not benefit from using free-lists.
 
 %%% Local Variables:
 %%% mode: latex
