@@ -1,4 +1,10 @@
 
+Programmeringsspråket Java hanterar minne automatiskt genom att använda sig av en skräpsamlare. Java Virtual Machine erbjuder flera olika skräpsamlare anpassade för olika användningsscenarier, varav en är ZGC. Både ZGC och andra skräpsamlare använder bump-pointer-allokering, vilket allokerar objekt kompakt men leder till skapandet av oanvändbara minnesluckor över tid, känt som fragmentering. ZGC hanterar fragmentering genom relokering, vilket är en dyr operation. Detta arbete föreslår en alternativ minnesallokeringsmetod som utnyttjar free-listor för att minska behovet av relokering som en metod för att hantera fragmentering.
+
+Vi designar och utvecklar en ny allokator anpassad för ZGC, baserad på TLSF-allokatorn av M. Masmano et al. Tidigare forskning om anpassning av allokatorer visar varierande resultat och undersöker inte fullt ut användningen i komplexa miljöer som en skräpsamlare.
+
+Vi identifierar möjligheter för förbättringar i prestanda och minneseffektivitet och implementerar dessa genom att utforska ZGC:s funktionella begränsningar. Den främsta anpassningen är införandet av en 0-byte header, som utnyttjar information inom ZGC för att avsevärt minska intern fragmentering. Vi utvärderar prestandan av vår anpassade allokator och jämför den med en referensimplementation av TLSF. Resultaten visar att den anpassade allokatorn presterar i nivå med referensimplementationen för enskilda allokeringar men är något långsammare för enskilda anrop till free och när allokeringsmönster från program som används i praktiken tillämpas. Resultaten av detta arbete tyder på att anpassning av allokatorer för skräpsamling är värt att överväga och kan vara användbart för framtida integration.
+
 %%% Local Variables:
 %%% mode: latex
 %%% TeX-master: "main"
