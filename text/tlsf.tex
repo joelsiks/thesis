@@ -24,15 +24,14 @@ Allocations inside TLSF are managed using blocks. Blocks are kept track of in tw
 
 Moreover, block sizes are aligned to multiples of the allocation unit (4 bytes for a 32-bit architecture). The two least significant bits within the block header are reserved for metadata. These bits indicate whether the block is free (F-bit) and whether it represents the last block within its pool (L-bit), as depicted in Figure~\ref{fig:blockheader_reference}. The F-bit is mainly used to see whether a block can be coalesced and the L-bit to easily iterate over physical blocks.
 
+The TLSF authors primarily focus on low-level allocation primitives, without explicit consideration for garbage collection. Consequently, exploring the adaptation of TLSF to integrate with a garbage collector represents a direction for advancing its development, which is the main focus of this work.
+
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.60\textwidth]{figures/blockheader_reference.png}
+    \includegraphics[width=0.80\textwidth]{figures/blockheader_reference.png}
     \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each individual field is 8 bytes instead of 4 bytes. (Taken from~\cite{TLSF}).}
     \label{fig:blockheader_reference}
 \end{figure}
-
-
-The TLSF authors primarily focus on low-level allocation primitives, without explicit consideration for garbage collection. Consequently, exploring the adaptation of TLSF to integrate with a garbage collector represents a direction for advancing its development, which is the main focus of this work.
 
 %%% Local Variables:
 %%% mode: latex

@@ -4,7 +4,7 @@
 
 The result of the single allocation benchmark is presented in Figure~\ref{fig:allocation_performance}. Initializing the memory after allocating is observed to have minimal impact on performance immediately following an allocation request. Performing the absolute worst-case allocation, when only a larger block exists, is shown to be slower in all cases than when a suitable block exists. This is expected since more work is done than when a suitable block exists. Furthermore, the optimized version is on par with the performance of the reference version, while the general version is slower than the other two versions. 
 
-\begin{figure}[H]
+\begin{figure}[]
     \centering
     \includesvg[width=0.8\textwidth]{figures/allocation_performance.svg}
     \caption{Performance of a single allocation on the different versions of the allocator when a suitable block exists, a suitable block exists and initializing the memory immediately after, and only a larger block exists.}
@@ -13,7 +13,7 @@ The result of the single allocation benchmark is presented in Figure~\ref{fig:al
 
 In contrast, the benchmark result of the single free benchmark is shown in Figure~\ref{fig:free_performance}. The general and optimized versions are observed to be comparable and are both about 25\% slower than the reference version. It is worth noting that both the reference and general version have coalescing disabled, which has an impact on performance and should be taken into account when considering the results.
 
-\begin{figure}[H]
+\begin{figure}[]
     \centering
     \includesvg[width=0.75\textwidth]{figures/free_performance.svg}
     \caption{Performance when freeing blocks of a single size. Immediate coalescing is disabled for the reference and general version, and is not implemented in the optimized version.}
@@ -22,7 +22,7 @@ In contrast, the benchmark result of the single free benchmark is shown in Figur
 
 The ratio between allocations and frees for the patterns collected from real-world programs is shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with \texttt{nullptr} as an argument, i.e. \texttt{free(nullptr)}. The reason this is highlighted is that calling free on a \texttt{nullptr} returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \includesvg[width=0.75\textwidth]{figures/program_ratios.svg}
     \caption{Ratio between allocations and frees for the benchmark programs, also showing the ratio of frees performed on null pointers. The total number of allocations and frees are shown below the program name in parentheses.}
@@ -31,14 +31,14 @@ The ratio between allocations and frees for the patterns collected from real-wor
 
 Performance results of applying patterns of allocations and frees are shown in Figure~\ref{fig:program_benchmarks}, with absolute values in Table~\ref{table:program_benchmarks}. The reference version is observed to be about 12\% faster in average than the other two versions across all programs, while the general and optimized versions are on-par in most programs, with slight deviations. There is an overhead of logistically applying the allocations and frees, which is added to all programs and is included in the results.
 
-\begin{figure}[H]
+\begin{figure}[]
     \centering
     \includesvg[width=0.75\textwidth]{figures/program_benchmark.svg}
     \caption{Scaled run time when applying patterns from different programs. The graph is linearly scaled such that the general version is always at 1.0 for performance comparison.}
     \label{fig:program_benchmarks}
 \end{figure}
 
-\begin{table}[H]
+\begin{table}[]
     \centering
     \begin{tabular}{p{3.44cm}|cccccc}
     {} & {cat} & {grep} & {ls} & {nano} & {sed} & {wc} \\
