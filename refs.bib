@@ -1,97 +1,58 @@
-@Electronic{openjdk,
+
+@electronic{openjdk,
   author = {Oracle},
   title  = {{OpenJDK}},
   year   = 2024,
   url    = {https://openjdk.org/},
-  organization = {Oracle},
-  note  = "Accessed 2024-03-08"
+  note   = "Accessed 2024-03-08"
 }
 
-@Electronic{zgc,
+@electronic{jdk:tag2232,
   author = {Oracle},
-  title  = {{The Z Garbage Collector}},
+  title  = {{openjdk/jdk (commit: b5ed8cca77ab3d4303dde691d6ccb113f3ce0a65)}},
   year   = 2024,
-  url    = {https://wiki.openjdk.org/display/zgc/Main},
-  note  = "Accessed 2024-05-15"
+  url    = {https://github.com/openjdk/jdk},
+  note   = "Accessed 2024-05-07"
 }
 
-@InProceedings{TLSF,
-  author={Masmano, M. and Ripoll, I. and Crespo, A. and Real, J.},
-  booktitle={Proceedings. 16th Euromicro Conference on Real-Time Systems, 2004. ECRTS 2004.}, 
-  title={{TLSF}: a new dynamic memory allocator for real-time systems}, 
-  year={2004},
-  pages={79-88},
-  doi={10.1109/EMRTS.2004.1311009}
-}
-
-@Electronic{hotspot,
-  author = {Oracle},
-  title  = {{The Java HotSpot Performance Engine Architecture}},
-  year   = 2024,
-  url    = {https://www.oracle.com/java/technologies/whitepaper.html},
-  organization = {Oracle},
-  note  = "Accessed 2024-03-08"
-}
-
-@Electronic{jvm,
+@electronic{jvm,
   author = {Oracle},
   title  = {{Java Virtual Machine Guide}},
   year   = 2023,
   url    = {https://docs.oracle.com/en/java/javase/21/vm/java-virtual-machine-technology-overview.html},
-  organization = {Oracle},
-  note  = "Accessed 2024-03-08"
+  note   = "Accessed 2024-03-08"
 }
 
-@Electronic{jdk:tag2232,
+@electronic{hotspot,
   author = {Oracle},
-  title  = {{OpenJDK Release 22.32}},
+  title  = {{The Java HotSpot Performance Engine Architecture}},
   year   = 2024,
-  url    = {https://github.com/openjdk/jdk/releases/tag/jdk-22%2B32},
-  organization = {Oracle},
-  note  = "Accessed 2024-05-07"
+  url    = {https://www.oracle.com/java/technologies/whitepaper.html},
+  note   = "Accessed 2024-03-08"
+}
+
+@electronic{zgc,
+  author = {Oracle},
+  title  = {{The Z Garbage Collector}},
+  year   = 2024,
+  url    = {https://wiki.openjdk.org/display/zgc/Main},
+  note   = "Accessed 2024-05-15"
+}
+
+@online{lilliput,
+    author = {{OpenJDK}},
+    title  = {{Lilliput Wiki}},
+    year   = {2024},
+    url    = {https://wiki.openjdk.org/display/lilliput/Main},
+    note   = "Accessed: 2024-03-05"
 }
 
 @book{gchandbook,
-  title     = "The garbage collection handbook",
+  title     = {{The Garbage Collection Handbook: The Art of Automatic Memory Management}},
   author    = "Jones, Richard and Hosking, Antony and Moss, Eliot",
   publisher = "Chapman \& Hall/CRC",
   edition   =  2,
   year      =  2023,
-}
-
-@article{zgc_deep_dive,
-    author = {Yang, Albert Mingkun and Wrigstad, Tobias},
-    title = {Deep Dive into ZGC: A Modern Garbage Collector in OpenJDK},
-    year = {2022},
-    issue_date = {December 2022},
-    publisher = {Association for Computing Machinery},
-    address = {New York, NY, USA},
-    volume = {44},
-    number = {4},
-    issn = {0164-0925},
-    url = {https://doi.org/10.1145/3538532},
-    doi = {10.1145/3538532},
-    abstract = {ZGC is a modern, non-generational, region-based, mostly concurrent, parallel, mark-evacuate collector recently added to OpenJDK. It aims at having GC pauses that do not grow as the heap size increases, offering low latency even with large heap sizes. The ZGC C++ source code is readily accessible in the OpenJDK repository, but reading it (25 KLOC) can be very intimidating, and one might easily get lost in low-level implementation details, obscuring the key concepts. To make the ZGC algorithm more approachable, this work provides a thorough description on a high-level, focusing on the overall design with moderate implementation details. To explain the concurrency aspects, we provide a SPIN model that allows studying races between mutators and GC threads, and how they are resolved in ZGC. Such a model is not only useful for learning the current design (offering a deterministic and interactive experience) but also beneficial for prototyping new ideas and extensions. Our hope is that our detailed description and the SPIN model will enable the use of ZGC as a building block for future GC research, and research ideas implemented on top of it could even be adopted in the industry more readily, bridging the gap between academia and industry in the context of GC research.},
-    journal = {ACM Trans. Program. Lang. Syst.},
-    month = {sep},
-}
-
-@inproceedings{zpage_size_table,
-    author = {Yang, Albert Mingkun and \"{O}sterlund, Erik and Wrigstad, Tobias},
-    title = {Improving program locality in the GC using hotness},
-    year = {2020},
-    publisher = {Association for Computing Machinery},
-    address = {New York, NY, USA},
-    url = {https://doi.org/10.1145/3385412.3385977},
-    doi = {10.1145/3385412.3385977},
-    pages = {301–313},
-}
-
-@book{gchandbook,
-    title={The Garbage Collection Handbook: The Art of Automatic Memory Management},
-    author={Jones, Richard and Hosking, Antony and Moss, Eliot},
-    year={2016},
-    publisher={Chapman and Hall/CRC}
 }
 
 @article{dlmalloc,
@@ -102,212 +63,196 @@
     year = "1996"
 }
 
-@online{lilliput,
-    author = {{OpenJDK}},
-    title = {{Lilliput Wiki}},
-    year = {2024},
-    url = {https://wiki.openjdk.org/display/lilliput/Main},
-    note  = "Accessed: 2024-03-05"
-}
-
 @book{artofmpprogramming,
-    author = {Herlihy, Maurice and Shavit, Nir},
-    title = {The Art of Multiprocessor Programming, Revised Reprint},
-    year = {2012},
-    isbn = {9780123973375},
-    publisher = {Morgan Kaufmann Publishers Inc.},
-    address = {San Francisco, CA, USA},
-    edition = {1st},
-    abstract = {Revised and updated with improvements conceived in parallel programming courses, The Art of Multiprocessor Programming is an authoritative guide to multicore programming. It introduces a higher level set of software development skills than that needed for efficient single-core programming. This book provides comprehensive coverage of the new principles, algorithms, and tools necessary for effective multiprocessor programming. Students and professionals alike will benefit from thorough coverage of key multiprocessor programming issues. This revised edition incorporates much-demanded updates throughout the book, based on feedback and corrections reported from classrooms since 2008 Learn the fundamentals of programming multiple threads accessing shared memory Explore mainstream concurrent data structures and the key elements of their design, as well as synchronization techniques from simple locks to transactional memory systems Visit the companion site and download source code, example Java programs, and materials to support and enhance the learning experience Table of Contents 1. Introduction 2. Mutual Exclusion 3. Concurrent Objects and Linearization 4. Foundations of Shared Memory 5. The Relative Power of Synchronization Methods 6. The Universality of Consensus 7. Spin Locks and Contention 8. Monitors and Blocking Synchronization 9. Linked Lists: the Role of Locking 10. Concurrent Queues and the ABA Problem 11. Concurrent Stacks and Elimination 12. Counting, Sorting and Distributed Coordination 13. Concurrent Hashing and Natural Parallelism 14. Skiplists and Balanced Search 15. Priority Queues 16. Futures, Scheduling and Work Distribution 17. Barriers 18. Transactional Memory Appendices}
+  author    = {Herlihy, Maurice and Shavit, Nir},
+  title     = {The Art of Multiprocessor Programming, Revised Reprint},
+  year      = {2012},
+  isbn      = {9780123973375},
+  publisher = {Morgan Kaufmann Publishers Inc.},
+  address   = {San Francisco, CA, USA},
+  edition   = {1st},
+  abstract  = {Revised and updated with improvements conceived in parallel programming courses, The Art of Multiprocessor Programming is an authoritative guide to multicore programming. It introduces a higher level set of software development skills than that needed for efficient single-core programming. This book provides comprehensive coverage of the new principles, algorithms, and tools necessary for effective multiprocessor programming. Students and professionals alike will benefit from thorough coverage of key multiprocessor programming issues. This revised edition incorporates much-demanded updates throughout the book, based on feedback and corrections reported from classrooms since 2008 Learn the fundamentals of programming multiple threads accessing shared memory Explore mainstream concurrent data structures and the key elements of their design, as well as synchronization techniques from simple locks to transactional memory systems Visit the companion site and download source code, example Java programs, and materials to support and enhance the learning experience Table of Contents 1. Introduction 2. Mutual Exclusion 3. Concurrent Objects and Linearization 4. Foundations of Shared Memory 5. The Relative Power of Synchronization Methods 6. The Universality of Consensus 7. Spin Locks and Contention 8. Monitors and Blocking Synchronization 9. Linked Lists: the Role of Locking 10. Concurrent Queues and the ABA Problem 11. Concurrent Stacks and Elimination 12. Counting, Sorting and Distributed Coordination 13. Concurrent Hashing and Natural Parallelism 14. Skiplists and Balanced Search 15. Priority Queues 16. Futures, Scheduling and Work Distribution 17. Barriers 18. Transactional Memory Appendices}
 }
 
-@InProceedings{bjarne_aba,
-    author={Dechev, Damian and Pirkelbauer, Peter and Stroustrup, Bjarne},
-    booktitle={2010 13th IEEE International Symposium on Object/Component/Service-Oriented Real-Time Distributed Computing}, 
-    title={Understanding and Effectively Preventing the ABA Problem in Descriptor-Based Lock-Free Designs}, 
-    year={2010},
-    volume={},
-    number={},
-    pages={185-192},
-    doi={10.1109/ISORC.2010.10}
+@inproceedings{bjarne_aba,
+  author    = {Dechev, Damian and Pirkelbauer, Peter and Stroustrup, Bjarne},
+  booktitle = {2010 13th IEEE International Symposium on Object/Component/Service-Oriented Real-Time Distributed Computing}, 
+  title     = {{Understanding and Effectively Preventing the ABA Problem in Descriptor-Based Lock-Free Designs}},
+  year      = {2010},
+  pages     = {185-192},
+  doi       = {10.1109/ISORC.2010.10}
 }
 
-@Electronic{mallocman,
-    title = {malloc(3) - Linux manual page},
-    author = {{The Linux man-pages project}},
-    organization = {{man7.org}},
-    year = {2024},
-    url = {https://man7.org/linux/man-pages/man3/malloc.3.html},
-    note  = "Accessed: 2024-03-15"
+@electronic{mallocman,
+  title        = {malloc(3) - Linux manual page},
+  author       = {{The Linux man-pages project}},
+  organization = {{man7.org}},
+  year         = {2024},
+  url          = {https://man7.org/linux/man-pages/man3/malloc.3.html},
+  note         = "Accessed: 2024-03-15"
 }
 
 @article{lifetime_predictors_memalloc,
-    author = {Barrett, David A. and Zorn, Benjamin G.},
-    title = {Using lifetime predictors to improve memory allocation performance},
-    year = {1993},
-    issue_date = {June 1993},
-    publisher = {Association for Computing Machinery},
-    address = {New York, NY, USA},
-    volume = {28},
-    number = {6},
-    issn = {0362-1340},
-    url = {https://doi.org/10.1145/173262.155108},
-    doi = {10.1145/173262.155108},
-    journal = {SIGPLAN Not.},
-    month = {jun},
-    pages = {187–196},
-    numpages = {10}
+  author     = {Barrett, David A. and Zorn, Benjamin G.},
+  title      = {Using lifetime predictors to improve memory allocation performance},
+  year       = {1993},
+  issue_date = {June 1993},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {28},
+  number     = {6},
+  issn       = {0362-1340},
+  url        = {https://doi.org/10.1145/173262.155108},
+  doi        = {10.1145/173262.155108},
+  journal    = {SIGPLAN Not.},
+  month      = {jun},
+  pages      = {187–196},
+  numpages   = {10}
 } 
 
 @article{configurable_allocator,
-    author = {Berger, Emery D. and Zorn, Benjamin G. and McKinley, Kathryn S.},
-    title = {Composing high-performance memory allocators},
-    year = {2001},
-    issue_date = {May 2001},
-    publisher = {Association for Computing Machinery},
-    address = {New York, NY, USA},
-    volume = {36},
-    number = {5},
-    issn = {0362-1340},
-    url = {https://doi.org/10.1145/378795.378821},
-    doi = {10.1145/381694.378821},
-    journal = {SIGPLAN Not.},
-    month = {may},
-    pages = {114–124},
-    numpages = {11}
+  author     = {Berger, Emery D. and Zorn, Benjamin G. and McKinley, Kathryn S.},
+  title      = {Composing high-performance memory allocators},
+  year       = {2001},
+  issue_date = {May 2001},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {36},
+  number     = {5},
+  issn       = {0362-1340},
+  url        = {https://doi.org/10.1145/378795.378821},
+  doi        = {10.1145/381694.378821},
+  journal    = {SIGPLAN Not.},
+  month      = {may},
+  pages      = {114–124},
+  numpages   = {11}
 }
 
 @book{custom_rec_1,
-  title={Efficient C++: Performance Programming Techniques},
-  author={Bulka, D. and Mayhew, D.},
-  isbn={9780201379501},
-  lccn={99039175},
-  year={2000},
-  publisher={Addison-Wesley}
+  title     = {Efficient C++: Performance Programming Techniques},
+  author    = {Bulka, D. and Mayhew, D.},
+  isbn      = {9780201379501},
+  lccn      = {99039175},
+  year      = {2000},
+  publisher = {Addison-Wesley}
 }
 
 @book{custom_rec_2,
-  title={Effective C++: 55 Specific Ways to Improve Your Programs and Designs},
-  author={Meyers, S.},
-  isbn={9780321334879},
-  lccn={2005924388},
-  year={2005},
-  publisher={Addison-Wesley}
+  title     = {Effective C++: 55 Specific Ways to Improve Your Programs and Designs},
+  author    = {Meyers, S.},
+  isbn      = {9780321334879},
+  lccn      = {2005924388},
+  year      = {2005},
+  publisher = {Addison-Wesley}
 }
 
 @article{slow_custom_allocators,
-    author = {Berger, Emery D. and Zorn, Benjamin G. and McKinley, Kathryn S.},
-    title = {Reconsidering custom memory allocation},
-    year = {2002},
-    issue_date = {November 2002},
-    publisher = {Association for Computing Machinery},
-    address = {New York, NY, USA},
-    volume = {37},
-    number = {11},
-    issn = {0362-1340},
-    url = {https://dl.acm.org/doi/10.1145/583854.582421},
-    doi = {10.1145/583854.582421},
-    journal = {SIGPLAN Not.},
-    month = {nov},
-    pages = {1–12},
-    numpages = {12}
+  author     = {Berger, Emery D. and Zorn, Benjamin G. and McKinley, Kathryn S.},
+  title      = {Reconsidering custom memory allocation},
+  year       = {2002},
+  issue_date = {November 2002},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {37},
+  number     = {11},
+  issn       = {0362-1340},
+  url        = {https://doi.org/10.1145/583854.582421},
+  doi        = {10.1145/583854.582421},
+  journal    = {SIGPLAN Not.},
+  month      = {nov},
+  pages      = {1–12},
+  numpages   = {12}
 }
 
 @article{mark_sweep,
-author = {McCarthy, John},
-title = {Recursive functions of symbolic expressions and their computation by machine, Part I},
-year = {1960},
-issue_date = {April 1960},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {3},
-number = {4},
-issn = {0001-0782},
-url = {https://doi-org.ezproxy.its.uu.se/10.1145/367177.367199},
-doi = {10.1145/367177.367199},
-journal = {Commun. ACM},
-month = {apr},
-pages = {184–195},
-numpages = {12}
+  author     = {McCarthy, John},
+  title      = {Recursive functions of symbolic expressions and their computation by machine, Part I},
+  year       = {1960},
+  issue_date = {April 1960},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {3},
+  number     = {4},
+  issn       = {0001-0782},
+  url        = {https://doi.org/10.1145/367177.367199},
+  doi        = {10.1145/367177.367199},
+  journal    = {Commun. ACM},
+  month      = {apr},
+  pages      = {184–195},
+  numpages   = {12}
 }
 
 @article{samsung_gc_free_list,
-title = {A garbage collection policy based on empirical behavior},
-journal = {Information Sciences},
-volume = {167},
-number = {1},
-pages = {129-146},
-year = {2004},
-issn = {0020-0255},
-doi = {https://doi.org/10.1016/j.ins.2003.05.014},
-url = {https://www.sciencedirect.com/science/article/pii/S0020025503003931},
-author = {Woo Hyong Lee and J.Morris Chang},
+  title   = {A garbage collection policy based on empirical behavior},
+  journal = {Information Sciences},
+  volume  = {167},
+  number  = {1},
+  pages   = {129-146},
+  year    = {2004},
+  issn    = {0020-0255},
+  doi     = {10.1016/j.ins.2003.05.014},
+  url     = {https://doi.org/10.1016/j.ins.2003.05.014},
+  author  = {Woo Hyong Lee and J.Morris Chang}
+}
+
+@inproceedings{TLSF,
+  author    = {Masmano, M. and Ripoll, I. and Crespo, A. and Real, J.},
+  booktitle = {Proceedings. 16th Euromicro Conference on Real-Time Systems, 2004. ECRTS 2004.}, 
+  title     = {{TLSF: a New Dynamic Memory Allocator for Real-Time Systems}}, 
+  year      = {2004},
+  pages     = {79-88},
+  doi       = {10.1109/EMRTS.2004.1311009},
+  url       = {https://doi.org/10.1109/EMRTS.2004.1311009}
+}
+
+@inproceedings{zgc:zpage_size_table,
+  author    = {Yang, Albert Mingkun and \"{O}sterlund, Erik and Wrigstad, Tobias},
+  title     = {Improving program locality in the {GC} using hotness},
+  year      = {2020},
+  isbn      = {9781450376136},
+  publisher = {Association for Computing Machinery},
+  address   = {New York, NY, USA},
+  url       = {https://doi.org/10.1145/3385412.3385977},
+  doi       = {10.1145/3385412.3385977},
+  booktitle = {Proceedings of the 41st ACM SIGPLAN Conference on Programming Language Design and Implementation},
+  pages     = {301–313},
+  numpages  = {13},
+  series    = {PLDI 2020}
 }
 
 @article{zgc:deep_dive,
-  author = {Yang, Albert Mingkun and Wrigstad, Tobias},
-  title = {Deep Dive into ZGC: A Modern Garbage Collector in OpenJDK},
-  year = {2022},
+  author     = {Yang, Albert Mingkun and Wrigstad, Tobias},
+  title      = {{Deep Dive into ZGC: A Modern Garbage Collector in OpenJDK}},
+  year       = {2022},
   issue_date = {December 2022},
-  publisher = {Association for Computing Machinery},
-  address = {New York, NY, USA},
-  volume = {44},
-  number = {4},
-  issn = {0164-0925},
-  url = {https://doi.org/10.1145/3538532},
-  doi = {10.1145/3538532},
-  journal = {ACM Trans. Program. Lang. Syst.},
-  month = {sep},
-  articleno = {22},
-  numpages = {34},
-  keywords = {model checking, SPIN, ZGC, Garbage collection}
-}
-
-%%%% Exempel på entryn från DiVA.
-%%%% Här är url-fältet tillagt, "UX" i titeln lagt inom {} för att det inte ska bli lowercase, och space före kolon som separerar titel från undertitel borttaget i titeln.
-@mastersthesis{Brane973772,
-   author = {Br{\"a}ne, Arvid},
-   institution = {Umeå University, Department of Applied Physics and Electronics},
-   pages = {65},
-   school = {Umeå University, Department of Applied Physics and Electronics},
-   title = {User Experience Design for Children: Developing and Testing a {UX} Framework},
-   keywords = {user experience (UX), user interface (UI), interaction design (IxD), graphical user interface (GUI), design, usability, kids, children, minors, teenagers, childhood, guidelines, framework, child centered design (CCD), tablets, smartphones, media, Lego, Star Wars, North Kingdom},
-   year = {2016},
-   url = {http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-125935}
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {44},
+  number     = {4},
+  issn       = {0164-0925},
+  url        = {https://doi.org/10.1145/3538532},
+  doi        = {10.1145/3538532},
+  journal    = {ACM Trans. Program. Lang. Syst.},
+  month      = {sep},
+  articleno  = {22},
+  numpages   = {34},
 }
 
 @article{fast_wait_free,
-author = {Kogan, Alex and Petrank, Erez},
-title = {A methodology for creating fast wait-free data structures},
-year = {2012},
-issue_date = {August 2012},
-publisher = {Association for Computing Machinery},
-address = {New York, NY, USA},
-volume = {47},
-number = {8},
-issn = {0362-1340},
-url = {https://doi-org.ezproxy.its.uu.se/10.1145/2370036.2145835},
-doi = {10.1145/2370036.2145835},
-journal = {SIGPLAN Not.},
-month = {feb},
-pages = {141–150},
-numpages = {10},
+  author     = {Kogan, Alex and Petrank, Erez},
+  title      = {{A Methodology for Creating Fast Wait-Free Data Structures}},
+  year       = {2012},
+  issue_date = {August 2012},
+  publisher  = {Association for Computing Machinery},
+  address    = {New York, NY, USA},
+  volume     = {47},
+  number     = {8},
+  issn       = {0362-1340},
+  url        = {https://doi.org/10.1145/2370036.2145835},
+  doi        = {10.1145/2370036.2145835},
+  journal    = {SIGPLAN Not.},
+  month      = {feb},
+  pages      = {141–150},
+  numpages   = {10},
 }
 
-%%%% Här är entrytypen ändrad från misc till techreport, fältet "series" ändrat till "type", url-fältet tillagt,
-%%%% och "DreamScape" i titeln lagd inom {} för att bevara CamelCaps.
-%%%% Av någon anledning lägger DiVA in flera "school"-fält. Ta bort de extra om varningarna stör.
-@techreport{Alstergren1439802,
-   author = {Alstergren, Iza and Andersson, Andreas and Hedman, Lovisa and Maric, Daniela},
-   institution = {Uppsala University, Department of Information Technology},
-   pages = {41},
-   school = {Uppsala University, Department of Information Technology},
-   school = {Uppsala University, Department of Information Technology},
-   school = {Uppsala University, Department of Information Technology},
-   school = {Uppsala University, Department of Information Technology},
-   title = {{DreamScape}, a Platform for Creating, Sharing and Listening to Interactive Stories},
-   type = {Självständigt arbete i informationsteknologi},
-   number = {2020-007},
-   year = {2020},
-   url = {http://urn.kb.se/resolve?urn=urn:nbn:se:uu:diva-413015}
-}
