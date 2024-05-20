@@ -111,7 +111,7 @@ When using the allocator for pages in ZGC, this is not a problem as the same pri
     \label{fig:concurrent_head_bits}
 \end{figure}
 
-\subsubsection{Insertion and removal of blocks}
+\subsubsection{Insertion and Removal of Blocks}
 
 The process of concurrently inserting a block into a free-list is outlined in Listing~\ref{algorithm:concurrent_insert_block}. Between loading the old head from the free-list and executing the \texttt{compare\_exchange()} operation, the new head must be constructed using data from the old head. However, there is a potential issue wherein the thread responsible for construction may be preempted, allowing another thread to modify the head during this time. To address this, if the \texttt{compare\_exchange()} operation fails, the thread will loop and create a new head until it is successfully performed.
 
