@@ -7,7 +7,7 @@ From the perspective of the user, TLSF has the same interface as \texttt{malloc(
 
 When the user requests N bytes from the allocator, the allocator aligns N to meet any necessary alignment requirements and applies padding. Subsequently, it checks the free-list matching the allocation request to see if it contains any block(s). If no block is found in the list, the allocator checks if any free-list contain blocks larger than the requested size. If no list containing large enough blocks is found, NULL is returned. However, if a list containing block(s) of large enough size is found, the allocator removes the first block in the list, regardless of the number of blocks in it. The policy of searching for free-lists and choosing the first block is called Good-Fit by the authors, referred to as a combination of best- and first-fit. Good-Fit performs well in that search times are low and block sizes often align with the allocation request, requiring little to no additional overhead. Moreover, if a block larger than the requested size is located, the allocator splits it into two blocks. One block is used to satisfy the request to the user, and the other is inserted back into the allocator. Figure~\ref{fig:tlsf_allocation} shows this process.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \includesvg[width=1.0\textwidth]{figures/tlsf_allocation.svg}
     \caption{The process of allocating memory in the TLSF allocator.}
@@ -24,7 +24,7 @@ Allocations inside TLSF are managed using blocks. Blocks are kept track of in tw
 
 Moreover, block sizes are aligned to multiples of the allocation unit (4 bytes for a 32-bit architecture). The two least significant bits within the block header are reserved for metadata. These bits indicate whether the block is free (F-bit) and whether it represents the last block within its pool (L-bit), as depicted in Figure~\ref{fig:blockheader_reference}. The F-bit is mainly used to see whether a block can be coalesced and the L-bit to easily iterate over physical blocks.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \includegraphics[width=0.60\textwidth]{figures/blockheader_reference.png}
     \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each individual field is 8 bytes instead of 4 bytes. (Taken from~\cite{TLSF}).}

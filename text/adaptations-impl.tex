@@ -9,7 +9,7 @@ The reference implementation of the allocator has been abstracted into a base cl
     \item Number of first- and second-levels (Sets the size range granularity and number of free-list)
     \item Minimum block size (The minimum size of blocks)
     \item Block header size (The size of the block header. Depends on what fields/bytes are used in the header)
-    \item Usage of second-levels (When not using second-levels, the bitmap is designed as described in Section~\ref{sec:adaptations_impl:bitmap_design}, otherwise the reference implementation is used)
+    \item Usage of second-levels (When not using second-levels, the new bitmap design is used, as described in Section~\ref{sec:adaptations_impl:bitmap_design}, otherwise the reference implementation is used)
     \item Usage of deferred coalescing (Deferred coalescing disables immediate coalescing. Coalescing can only be done through explicit coalescing)
 \end{enumerate}
 
@@ -23,7 +23,7 @@ Summarizing the insight from Section~\ref{sec:adaptations:reduced_allocation_ran
 
 Like is done in the reference design, the new bitmap places the classes of the lowest size at the least significant bits to make searching for the next non-empty free-list efficient using the find-first-set (\texttt{ffs}) bit instruction. Furthermore, the new design only requires searching a single bitmap, making a single \texttt{ffs} instruction enough to find free-lists in any first-level, unlike the reference design which requires two \texttt{ffs} instructions.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \includesvg[width=0.8\textwidth]{figures/bitmap_flattening.svg}
     \vspace*{4mm}
@@ -33,7 +33,7 @@ Like is done in the reference design, the new bitmap places the classes of the l
 
 The correlation between the new bitmap and free-lists is depicted in Figure~\ref{fig:bitmap_relationship}, adhering closely to the original TLSF design. The highest granularity of free-list size-ranges are found for the smallest allocations, which aligns well with most allocations being small inside most Java programs. This leads to less memory potentially being wasted and less splitting done since more blocks match the request size, thus saving performance.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \vspace*{0.2cm}
     \includesvg[width=1.0\textwidth]{figures/bitmap_relationship.svg}
@@ -47,7 +47,7 @@ The correlation between the new bitmap and free-lists is depicted in Figure~\ref
 
 The block header, as designed in the reference implementation, is shown in Figure~\ref{fig:blockheader_adap_reference}. Here, the size and previous physical pointer (prev\_phys) are constant and the next and prev pointers are only used in the unused part of free blocks, and unused for allocated blocks. In contrast, Figure~\ref{fig:blockheader_adap_general} shows the adapted block header for the general version of the allocator. In this version, all four fields are used for both free and allocated blocks since the previous physical pointer has been rearranged to the end of the header. Rearranging the previous physical pointer to be the last field in the header, as shown in Figure~\ref{fig:blockheader_adap_optimized}, makes it possible to have the same definition for the general and optimized version, while the optimized version only uses the first 16 bytes of it.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \begin{subfigure}[b]{0.3\textwidth}
         \centering
@@ -103,7 +103,7 @@ Version tagging is described by D. Dechev et al.~\cite{bjarne_aba} as a common a
 
 When using the allocator for pages in ZGC, this is not a problem as the same principles applied in Section~\ref{sec:adaptations_impl:0-byte-header} can be used to convert 64-bit pointers to 32-bit offsets. This conversion allows storing the version tag in the remaining 32 bits of the word, as illustrated in Figure~\ref{fig:concurrent_head_bits}.
 
-\begin{figure}[H]
+\begin{figure}[h]
     \centering
     \vspace*{4mm}
     \includesvg[width=1\textwidth]{figures/concurrent_head_bits.svg}
