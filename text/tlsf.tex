@@ -20,7 +20,7 @@ When a block is freed, TLSF tries to coalesce the block with its neighboring blo
 
 The name Two-Level Segregated Fit reflects its design as a free-list based allocator that uses segregated-fit, storing multiple free-lists containing blocks of set size classes. To efficiently lookup what free-list are non-empty, TLSF employs two levels of bitmaps. A first-level bitmap for size classes that are separated by powers of two and a second-level bitmap that subdivides the first-level size classes linearly. In the reference implementation, the number of first- and second-levels are both limited to 32 in order to fit in 32 bits. Additionally, the number of second-levels is recommended to be a power of two for efficiency reasons, so that simple bit-shift instructions can be used. The combined use of multiple free-lists and bitmaps for information bookkeeping enables the asymptotic worst-case response times for allocating and freeing memory to be constant, i.e. \texttt{O(1)}, since it limits the number of instructions for finding blocks.
 
-Allocations inside TLSF are managed using blocks. Blocks are kept track of in two doubly-linked list structures. Initially, blocks are arranged in a physically ordered list by their place in memory, and if a block becomes free, it is then inserted into an appropriate free-list, that is ordered by block size instead. Each block is accompanied by an associated header located next to it. The header specifies the size of the block and also its position within both doubly-linked lists and contains different data depending on if it is free or not. Free blocks contain additional data over allocated blocks, as shown in Figure~\ref{fig:blockheader_reference}.
+Allocations inside TLSF are managed using blocks. Blocks are kept track of in two doubly-linked list structures. Initially, blocks are arranged in a physically ordered list by their place in memory, and if a block becomes free, it is then inserted into an appropriate free-list, that is ordered by block size instead. Each block is accompanied by an associated header located next to it. The header specifies the size of the block and also its position within both doubly-linked lists and contains different data depending on whether it is free or not. Free blocks contain additional data over allocated blocks, as shown in Figure~\ref{fig:blockheader_reference}.
 
 Moreover, block sizes are aligned to multiples of the allocation unit (4 bytes for a 32-bit architecture). The two least significant bits within the block header are reserved for metadata. These bits indicate whether the block is free (F-bit) and whether it represents the last block within its pool (L-bit), as depicted in Figure~\ref{fig:blockheader_reference}. The F-bit is mainly used to see whether a block can be coalesced and the L-bit to easily iterate over physical blocks.
 
@@ -29,7 +29,7 @@ The TLSF authors primarily focus on low-level allocation primitives, without exp
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.80\textwidth]{figures/blockheader_reference.png}
-    \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each individual field is 8 bytes instead of 4 bytes. (Taken from~\cite{TLSF}).}
+    \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each field is 8 bytes instead of 4 bytes. (Taken from~\cite{TLSF}).}
     \label{fig:blockheader_reference}
 \end{figure}
 

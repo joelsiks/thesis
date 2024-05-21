@@ -57,9 +57,9 @@ Performance results of applying patterns of allocations and frees are shown in F
 
 The sizes of the block headers for the different versions are 32 bytes, of which 16 bytes can be used by allocated blocks for the reference version; 32 bytes for the general version; and 0 bytes for the optimized version. 
 
-In the worst case with maximum padding necessary, the reference version will waste up to 57.5\%, general version 69.6\% and the optimized version 29.2\%, if filling the heap with as many allocations as possible of 17 bytes. Looking at the second case where there is no padding necessary for alignment, the reference version will waste up to 50\%, general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
+In the worst case with maximum padding necessary, the reference version will waste up to 57.5\%, the general version 69.6\% and the optimized version 29.2\%, if filling the heap with as many allocations as possible of 17 bytes. Looking at the second case where there is no padding necessary for alignment, the reference version will waste up to 50\%, the general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
 
-To summarize, when filling the heap with as small allocations as possible and considering the size of the block header and any necessary padding due to alignment, the reference version will waste 50\%-57.5\%, general version 66\%-69.6\% and the optimized version 0\%-29.2\%, depending on the amount of padding that is applied. This means that for the optimized version, the single source of internal fragmentation is due to the padding that is applied.
+To summarize, when filling the heap with as small allocations as possible and considering the size of the block header and any necessary padding due to alignment, the reference version will waste 50\%-57.5\%, the general version 66\%-69.6\% and the optimized version 0\%-29.2\%, depending on the amount of padding that is applied. This means that for the optimized version, the single source of internal fragmentation is due to the padding that is applied.
 
 %%% Local Variables:
 %%% mode: latex
