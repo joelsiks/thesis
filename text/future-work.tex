@@ -2,7 +2,7 @@
 \subsection{Integration With ZGC}
 \label{sec:future-work:integration}
 
-As highlighted throughout this report, the natural progression of this work is its integration into ZGC. As briefly mentioned in Section~\ref{sec:individual_contrubitons}, N. Gärds~\cite{niclas_report} has explored, in parallel to this work, the challenges and opportunities of integrating any free-list allocator into ZGC, though not specifically the optimized TLSF allocator. Leveraging the findings from N. Gärds’ research to integrate the optimized TLSF allocator into ZGC could provide comprehensive insights into its performance within the intended environment.
+As highlighted throughout this report, the natural progression of this work is its integration into ZGC. As briefly mentioned in Section~\ref{sec:individual_contrubitons}, N. Gärds~\cite{niclas} has explored, in parallel to this work, the challenges and opportunities of integrating any free-list allocator into ZGC, though not specifically the optimized TLSF allocator. Leveraging the findings from N. Gärds’ research to integrate the optimized TLSF allocator into ZGC could provide comprehensive insights into its performance within the intended environment.
 
 The evaluation did not assess the concurrency aspects of the optimized allocator, focusing instead on specific improvements unrelated to concurrency. The impact of concurrency on allocator performance, especially within ZGC's concurrent operating environment, is substantial and requires a detailed examination. Future integration and testing in ZGC are imperative to fully understand and optimize these effects.
 

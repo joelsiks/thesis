@@ -11,7 +11,7 @@ The result of the single allocation benchmark is presented in Figure~\ref{fig:al
     \label{fig:allocation_performance}
 \end{figure}
 
-In contrast, the benchmark result of the single free benchmark is shown in Figure~\ref{fig:free_performance}. The general and optimized versions are observed to be comparable and are both about 25\% slower than the reference version. It is worth noting that both the reference and general version have coalescing disabled, which has an impact on performance and should be taken into account when considering the results.
+In contrast, the benchmark result of the single-free benchmark is shown in Figure~\ref{fig:free_performance}. The general and optimized versions are observed to be comparable and are both about 25\% slower than the reference version. It is worth noting that both the reference and general version have coalescing disabled, which has an impact on performance and should be taken into account when considering the results.
 
 \begin{figure}[]
     \centering
@@ -20,7 +20,7 @@ In contrast, the benchmark result of the single free benchmark is shown in Figur
     \label{fig:free_performance}
 \end{figure}
 
-The ratio between allocations and frees for the patterns collected from real-world programs is shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with \texttt{nullptr} as an argument, i.e. \texttt{free(nullptr)}. The reason this is highlighted is that calling free on a \texttt{nullptr} returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
+The ratio between allocations and frees for the patterns collected from real-world programs is shown in Figure~\ref{fig:program_ratios}, which also includes the ratio of free calls made with \texttt{nullptr} as an argument, i.e., \texttt{free(nullptr)}. The reason this is highlighted is that calling free on a \texttt{nullptr} returns immediately without doing anything, which is a valid operation according to the \texttt{malloc()} API.
 
 \begin{figure}[h]
     \centering
@@ -29,7 +29,7 @@ The ratio between allocations and frees for the patterns collected from real-wor
     \label{fig:program_ratios}
 \end{figure}
 
-Performance results of applying patterns of allocations and frees are shown in Figure~\ref{fig:program_benchmarks}, with absolute values in Table~\ref{table:program_benchmarks}. The reference version is observed to be about 12\% faster in average than the other two versions across all programs, while the general and optimized versions are on-par in most programs, with slight deviations. There is an overhead of logistically applying the allocations and frees, which is added to all programs and is included in the results.
+Performance results of applying patterns of allocations and frees are shown in Figure~\ref{fig:program_benchmarks}, with absolute values in Table~\ref{table:program_benchmarks}. The reference version is observed to be about 12\% faster on average than the other two versions across all programs, while the general and optimized versions are on par in most programs, with slight deviations. There is an overhead of logistically applying the allocations and frees, which is added to all programs and is included in the results.
 
 \begin{figure}[]
     \centering
@@ -51,13 +51,11 @@ Performance results of applying patterns of allocations and frees are shown in F
     \label{table:program_benchmarks}
 \end{table}
 
-\newpage
-
 \subsection{Internal Fragmentation}
 
 The sizes of the block headers for the different versions are 32 bytes, of which 16 bytes can be used by allocated blocks for the reference version; 32 bytes for the general version; and 0 bytes for the optimized version. 
 
-In the worst case with maximum padding necessary, the reference version will waste up to 57.5\%, the general version 69.6\% and the optimized version 29.2\%, if filling the heap with as many allocations as possible of 17 bytes. Looking at the second case where there is no padding necessary for alignment, the reference version will waste up to 50\%, the general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
+In the worst case with maximum padding necessary, the reference version will waste up to 57.5\%, the general version 69.6\% and the optimized version 29.2\% if filling the heap with as many allocations as possible of 17 bytes. Looking at the second case where there is no padding necessary for alignment, the reference version will waste up to 50\%, the general version 66\% and the optimized version 0\%, if filling the heap with as many allocations as possible of 16 bytes.
 
 To summarize, when filling the heap with as small allocations as possible and considering the size of the block header and any necessary padding due to alignment, the reference version will waste 50\%-57.5\%, the general version 66\%-69.6\% and the optimized version 0\%-29.2\%, depending on the amount of padding that is applied. This means that for the optimized version, the single source of internal fragmentation is due to the padding that is applied.
 
