@@ -10,7 +10,7 @@ As explained in Section~\ref{sec:tlsf}, the two least significant bits within th
 
 \subsection{General and Optimized Versions}
 
-The two use cases that will be considered when further adapting the allocator are using it either as a normal allocator in cases where a traditional \texttt{malloc()} and \texttt{free()} combination is used or as a way to allocate objects on pages in ZGC. A way to realize this is by making the allocator configurable, similar to what E. Berger et al.~\cite{configurable_allocator} have done, utilizing C++ templates and inheritance. Having a configurable allocator is not only desirable from a maintenance perspective, but it also allows adaptation to new environments and requirements. Additionally, it becomes easier to compare different versions of the allocator by changing the configuration, streamlining the process of measuring the efficacy of any potential improvements.
+The two use cases that will be considered when further adapting the allocator are using it either as a normal allocator in cases where a traditional \texttt{malloc()} and \texttt{free()} combination is used or as a way to allocate objects on pages in ZGC. A way to realize this is by making the allocator configurable, similar to what Berger et al.~\cite{configurable_allocator} have done, utilizing C++ templates and inheritance. Having a configurable allocator is not only desirable from a maintenance perspective, but it also allows adaptation to new environments and requirements. Additionally, it becomes easier to compare different versions of the allocator by changing the configuration, streamlining the process of measuring the efficacy of any potential improvements.
 
 Moving on, the use case of using the allocator as a general allocator is referred to as the general version, and the adapted version for ZGC as the optimized version. The general version will aim to be as similar to the reference implementation as possible.
 
@@ -61,7 +61,7 @@ void coalesce_blocks() {
 \subsection{Block Header Adjustments}
 \label{sec:adaptations:block-header-adjustments}
 
-According to R. Jones et al.~\cite[Page 103]{gchandbook}, when using allocators in garbage collectors, it is a reasonable approach to remove certain parts of the so-called boundary tag, or block header, for TLSF. As opposed to a general-purpose allocator designed for use in any system, an allocator used in a garbage collector does not need to keep track of as much information, as some of it is already kept track of in the GC itself.
+According to Jones et al.~\cite[Page 103]{gchandbook}, when using allocators in garbage collectors, it is a reasonable approach to remove certain parts of the so-called boundary tag, or block header, for TLSF. As opposed to a general-purpose allocator designed for use in any system, an allocator used in a garbage collector does not need to keep track of as much information, as some of it is already kept track of in the GC itself.
 
 The goal of adjusting the header is to reduce the constant block header overhead required when allocating blocks. The reduction is applied to headers for all allocations but is especially noteworthy for smaller blocks, where the header makes up a larger portion of the total memory used for that specific allocation. This aligns well with the fact that most allocations in Java programs are small, making the adjustment more significant.
 

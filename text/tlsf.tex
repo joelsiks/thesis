@@ -1,5 +1,5 @@
 
-Two-Level Segregated Fit (TLSF) is a dynamic storage allocator by M. Masmano et al.~\cite{TLSF}. It is especially designed to be used in real-time applications, where it stands out among other allocators in that it has a bounded and short response time and maintains low fragmentation, thus ensuring high predictability. 
+Two-Level Segregated Fit (TLSF) is a dynamic storage allocator by Masmano et al.~\cite{TLSF}. It is especially designed to be used in real-time applications, where it stands out among other allocators in that it has a bounded and short response time and maintains low fragmentation, thus ensuring high predictability. 
 
 \subsection{Allocation and Freeing Strategy}
 
@@ -29,7 +29,7 @@ The TLSF authors primarily focus on low-level allocation primitives without expl
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.80\textwidth]{figures/blockheader_reference.png}
-    \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each field is 8 bytes instead of 4 bytes (Taken from M. Masmano et al.~\cite{TLSF}).}
+    \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each field is 8 bytes instead of 4 bytes (Taken from Masmano et al.~\cite{TLSF}).}
     \label{fig:blockheader_reference}
 \end{figure}
 
