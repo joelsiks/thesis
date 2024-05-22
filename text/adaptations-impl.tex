@@ -73,11 +73,13 @@ The block header, as designed in the reference implementation, is shown in Figur
     \label{fig:blockheader_adaptations}
 \end{figure}
 
+\newpage
+
 As stated in Section~\ref{sec:adaptations:block-header-adjustments}, the size field can be ignored for allocated blocks if the block size is kept track of somewhere else and is provided upon calling \texttt{free()}. The benefit of doing this is that more memory is available for object allocation inside ZGC pages. Consequently, this means that the size must be fetched and perhaps computed from elsewhere, adding extra operations that might decrease performance. 
 
 Additionally, to further minimize footprint, the next and prev pointers have been converted to offsets in the optimized version, allowing them to be 32 bits each. The conversion to and from offsets and pointers means adding extra operations, which might decrease performance further at the cost of memory efficiency. The next and prev fields are only used inside the unused memory of free blocks. Neither field is used for allocated blocks, which, in addition to not storing the size of the block, requires no header at all, hence the name \textit{0-byte header}.
 
-In summary, the increase in available memory when applying block header optimization is at the cost of potentially decreased performance and is most likely a trade-off worth making. This is because most allocations in Java are small, which results in the size of the block header taking up proportionally more memory.
+In summary, the increase in available memory when applying block header optimization is at the cost of potentially decreased performance and is most likely a trade-off worth making. This is because most allocations in Java are small, which results in the size of the block header taking up proportionally more memory than for larger allocations.
 
 \subsection{Concurrency Implementation}
 \label{sec:adaptations_impl:concurrency}
@@ -129,6 +131,8 @@ void insert_block(BlockHeader blk) {
 \end{lstlisting}
 
 The process of concurrently removing a block from a free-list, as illustrated in Listing~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contains additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails without looping until successfully performing a swap, like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again, and thus loop outside the \texttt{remove\_block()} function.
+
+\newpage
 
 \begin{lstlisting}[language=C++, caption={Concurrent removal of the head of a free-list.}, label={algorithm:concurrent_remove_block}]
 BlockHeader *remove_block(Mapping mapping) {
