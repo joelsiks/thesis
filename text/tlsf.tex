@@ -26,7 +26,7 @@ Moreover, block sizes are aligned to multiples of the allocation unit (4 bytes f
 
 The TLSF authors primarily focus on low-level allocation primitives without explicit consideration for garbage collection. Consequently, exploring the adaptation of TLSF to integrate with a garbage collector represents a direction for advancing its development, which is the main focus of this work.
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
     \includegraphics[width=0.80\textwidth]{figures/blockheader_reference.png}
     \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each field is 8 bytes instead of 4 bytes (Taken from M. Masmano et al.~\cite{TLSF}).}

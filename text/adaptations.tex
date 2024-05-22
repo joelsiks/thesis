@@ -23,8 +23,6 @@ In ZGC, small pages limit the user to allocate in a specific size range, namely 
 
 Since a small page is 2 MB large, the initial block will be of the same size, which is significantly larger than the maximum allocation size of 256 KB. There are two ways to solve this: either break the initial block into smaller blocks or allow storing blocks larger than the maximum allocation size. For simplicity's sake, another free-list is added that stores blocks larger than the maximum allocation size, called a ``large-list'', at the 57th bit.
 
-\newpage
-
 To summarize, the new bitmap uses 57 bits to store information for all free-lists, which fits inside a word of 64 bits. Having a single word allows finding free-lists that contain blocks faster, using a more simplified indexing process. Additionally, when considering concurrency later on, atomic operations can be used when performing updates on the bitmap. A potential drawback of reducing the number of second-levels to 4 is that it could negatively impact the granularity of block sizes and the number of splits that might be performed. This does not pose a major drawback in ZGC and for Java programs, where most allocations are small, as the highest granularity is found for small blocks.
 
 \subsection{Transitioning Between Different Allocation Strategies}
@@ -59,8 +57,6 @@ void coalesce_blocks() {
     }
 }
 \end{lstlisting}
-
-\newpage
 
 \subsection{Block Header Adjustments}
 \label{sec:adaptations:block-header-adjustments}
