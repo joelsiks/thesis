@@ -7,7 +7,7 @@ This inherent inflexibility of bump-pointer allocation may contribute to increas
 
 This inherent inflexibility of bump-pointer allocation may contribute to increased intra-page fragmentation, as objects are allocated at the top of available memory, potentially leaving unused space within the page. An alternative method is to use a free-list to keep track of where memory can be allocated on a per-page level, potentially reducing fragmentation and maximizing memory utilization.
 
-The advantage of a free-list~\cite{gchandbook} is that it easily tracks fragmented memory and facilitates object allocation within such memory. There are instances where free-lists have been used in the context of garbage collection to allocate memory. For example, the well-established mark-sweep algorithm~\cite{gchandbook} does not compact memory and thus uses a free-list to manage the fragmentation that results from this approach. This project aims to explore potential challanges and opportunities in the area of customising a free-list-based memory allocator for use in ZGC.
+The advantage of a free-list~\cite{gchandbook} is that it easily tracks fragmented memory and facilitates object allocation within such memory. There are instances where free-lists have been used in the context of garbage collection to allocate memory. For example, the well-established mark-sweep algorithm~\cite{gchandbook} does not compact memory and thus uses a free-list to manage the fragmentation that results from this approach. This project aims to explore potential challenges and opportunities in the area of customising a free-list-based memory allocator for use in ZGC.
 
 %%% Local Variables:
 %%% mode: latex
