@@ -5,7 +5,7 @@ Two-Level Segregated Fit (TLSF) is a dynamic storage allocator by Masmano et al.
 
 From the perspective of the user, TLSF has the same interface as \texttt{malloc()} and \texttt{free()} in libc~\cite{mallocman}. What makes TLSF unique is its internal mechanisms, which are discussed next.
 
-When the user requests N bytes from the allocator, the allocator aligns N to meet any necessary alignment requirements and applies padding. Subsequently, it checks the free-list matching the allocation request to see if it contains any block(s). If no block is found in the list, the allocator checks if any free-list contains blocks larger than the requested size. If no list containing large enough blocks is found, NULL is returned. However, if a list containing block(s) of large enough size is found, the allocator removes the first block in the list, regardless of the number of blocks in it. The policy of searching for free-lists and choosing the first block is called Good-Fit by the authors, referred to as a combination of best- and first-fit. Good-Fit performs well in that search times are low and block sizes often align with the allocation request, requiring little to no additional overhead. Moreover, if a block larger than the requested size is located, the allocator splits it into two blocks. One block is used to satisfy the request to the user, and the other is inserted back into the allocator. Figure~\ref{fig:tlsf_allocation} shows this process.
+When the user requests N bytes from the allocator, the allocator aligns N to meet any necessary alignment requirements and applies padding. Subsequently, it checks the free-list matching the allocation request to see if it contains any block(s). If no block is found in the list, the allocator checks if any free-list contains blocks larger than the requested size. If no list containing large enough blocks is found, NULL is returned. However, if a list containing block(s) of large enough size is found, the allocator removes the first block in that list, regardless of the number of blocks in it. The policy of searching for free-lists and choosing the first block is called Good-Fit by the authors, referred to as a combination of best- and first-fit. Good-Fit performs well in that search times are low and block sizes often align with the allocation request, requiring little to no additional overhead. Moreover, if a block larger than the requested size is located, the allocator splits it into two blocks. One block is used to satisfy the request to the user, and the other is inserted back into the allocator. Figure~\ref{fig:tlsf_allocation} shows this process.
 
 \begin{figure}[h]
     \centering
@@ -29,7 +29,7 @@ The TLSF authors primarily focus on low-level allocation primitives without expl
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.80\textwidth]{figures/blockheader_reference.png}
-    \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each field is 8 bytes instead of 4 bytes (Taken from Masmano et al.~\cite{TLSF}).}
+    \caption{Representation of free and allocated block headers in 32-bit architecture. For a 64-bit architecture, each field is 8 bytes instead of 4 bytes, which is notable since ZGC only supports 64-bit architecture (Taken from Masmano et al.~\cite{TLSF}).}
     \label{fig:blockheader_reference}
 \end{figure}
 

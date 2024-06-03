@@ -28,16 +28,34 @@
 \urlstyle{same}
 
 \RequirePackage{float}
+\RequirePackage{caption}
 \floatstyle{ruled}
 %\floatstyle{boxed}
 \restylefloat{figure}
 \restylefloat{table}
 % but patch it to put the caption below instead of at top
+
 \renewcommand\fs@ruled{\def\@fs@cfont{\bfseries}\let\@fs@capt\floatc@ruled
   \def\@fs@pre{\hrule height.8pt depth0pt \kern2pt}%
   \def\@fs@post{\kern2pt\hrule\relax}%
   \def\@fs@mid{\kern2pt\hrule\kern2pt}%
   \let\@fs@iftopcapt\iffalse}
+
+% Define a new float style for tables with captions at the top
+\newcommand\floatc@ruledtop[2]{\vskip\abovecaptionskip\box\@tempboxa\vskip\belowcaptionskip\box#1}
+\newcommand\fs@ruledtop{\let\@fs@capt\floatc@ruledtop
+  \def\@fs@pre{\hrule height.8pt depth0pt \kern2pt}%
+  \def\@fs@post{\kern2pt\hrule\relax}%
+  \def\@fs@mid{\kern2pt\hrule\kern2pt}%
+  \let\@fs@iftopcapt\iftrue
+  \let\@fs@cfont\floatc@cfont
+  \let\@fs@ftn\floatc@ftn}
+
+\captionsetup[table]{labelfont=bf, labelsep=space, textfont=normalfont, justification=justified, singlelinecheck=off}
+
+% Apply the new float style to tables
+\floatstyle{ruledtop}
+\restylefloat{table}
 
 % Useful font packages for maths and symbols
 \RequirePackage{amssymb,amsmath,amsthm,amsfonts}

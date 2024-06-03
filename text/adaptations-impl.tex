@@ -6,11 +6,11 @@ This section provides the implementation specifics for the adaptations described
 The reference implementation of the allocator has been abstracted into a base class named \texttt{TLSFBase}. From the base class, the user must provide a set of configuration variables that define how the allocator behaves, where each unique set of configuration variables defines a new allocator. An allocator may override the implementation of the methods defined in the base class so that computations may be done differently. For example, this allows different versions to apply different allocation, freeing, and concurrency methods. The configuration variables are:
 
 \begin{enumerate}
-    \item Number of first- and second-levels (Sets the size range granularity and number of free-list)
-    \item Minimum block size (The minimum size of blocks)
-    \item Block header size (The size of the block header. Depends on what fields/bytes are used in the header)
-    \item Usage of second-levels (When not using second-levels, the new bitmap design is used, as described in Section~\ref{sec:adaptations_impl:bitmap_design}, otherwise the reference implementation is used)
-    \item Usage of deferred coalescing (Deferred coalescing disables immediate coalescing. Coalescing can only be done through explicit coalescing)
+    \item Number of first- and second-levels (Sets the size range granularity and number of free-list).
+    \item Minimum block size (The minimum size of blocks).
+    \item Block header size (The size of the block header. Depends on what fields/bytes are used in the header).
+    \item Usage of second-levels (When not using second-levels, the new bitmap design is used, as described in Section~\ref{sec:adaptations_impl:bitmap_design}, otherwise the reference implementation is used).
+    \item Usage of deferred coalescing (Deferred coalescing disables immediate coalescing. Coalescing can only be done through explicit coalescing).
 \end{enumerate}
 
 \subsection{New Bitmap Design}
@@ -81,23 +81,32 @@ Additionally, to further minimize footprint, the next and prev pointers have bee
 
 In summary, the increase in available memory when applying block header optimization is at the cost of potentially decreased performance and is most likely a trade-off worth making. This is because most allocations in Java are small, which results in the size of the block header taking up proportionally more memory than for larger allocations.
 
-\subsection{Concurrency Implementation}
+\subsection{Implementing Concurrency Support}
 \label{sec:adaptations_impl:concurrency}
 
-Implementing concurrency for the allocator will require being able to concurrently operate on its free-lists. The free-lists, in combination with the bitmaps that store data about them, are the critical sections of the allocator. In the reference design, the free-lists are designed as doubly linked lists. However, lock-free operations on a doubly linked list will not be considered due to the complex operations required to support them. Instead, the appearance of the free-lists is simplified to make it easier to support concurrent operations.
+Implementing concurrency support for the allocator will require being able to concurrently operate on its free-lists. The free-lists, in combination with the bitmaps that store data about them, are the critical sections of the allocator. In the reference design, the free-lists are designed as doubly-linked lists. However, lock-free operations on a doubly-linked list were not considered due to the complex operations required to support them. Instead, the appearance of the free-lists is simplified to make it easier to support concurrent operations.
 
-By disregarding the pointer to the previous free block inside block headers, the appearance of the free-lists can be transformed from a doubly linked list to a singly linked list. This transformation is possible when not coalescing immediately, since the previous pointer is only used when inserting and removing blocks at positions other than the head of a free-list. Consequently, by only allowing updates at the head of a free-list, the singly linked list effectively becomes a stack, simplifying the implementation of a lock-free solution.
+By disregarding the pointer to the previous free block inside block headers, the appearance of the free-lists can be transformed from a doubly-linked list to a singly-linked list. This transformation is possible when not coalescing immediately, since the previous pointer is only used when inserting and removing blocks at positions other than the head of a free-list. Consequently, by only allowing updates at the head of a free-list, the singly-linked list effectively becomes a stack, simplifying the implementation of a lock-free solution.
 
-Herlihy and Shavit~\cite[Chapter 11]{artofmpprogramming} describe the design and inner workings of a lock-free stack on which the concurrent implementation of the allocator is largely based. For reference, a general overview of how a lock-free stack works and how it connects to the free-lists inside the allocator is described.
+Herlihy and Shavit~\cite{artofmpprogramming} describe the design and inner workings of the lock-free stack by Treiber~\cite{treiber}, on which the concurrent implementation of the allocator is largely based. For reference, a general overview of how a lock-free stack works and how it connects to the free-lists inside the allocator is described.
 
-A stack only requires two operations: \texttt{push()} and \texttt{pop()}, which are named \texttt{insert()} and \texttt{remove()} in the allocator to stay consistent with their meaning from the general version. The insert operation replaces the head of the stack, or free-list, with a new block, while the remove operation removes the head of the free-list and replaces it with the next block, if any, in the free-list. In order to make the allocator work in a thread-safe manner, only these two operations need to be concurrent, since all other operations in the allocator can be done independently of other threads.
+A stack only requires the push and pop operations, which are named \texttt{insert()} and \texttt{remove()} in the allocator to stay consistent with their meaning from the general version. The insert operation replaces the head of the stack, or free-list, with a new block, while the remove operation removes the head of the free-list and replaces it with the next block, if any, in the free-list. In order to make the allocator work in a thread-safe manner, only these two operations need to be concurrent, since all other operations in the allocator can be done independently of other threads.
 
 The free-lists will be operated on concurrently without locks using the atomic operations \texttt{load()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/load}} and \texttt{compare\_exchange()}\footnote{\url{https://en.cppreference.com/w/cpp/atomic/atomic/compare_exchange}}, provided in the C++ standard library. \texttt{load()} returns the current value of an atomic variable, and \texttt{compare\_exchange()} compares the value of a variable with an expected value, and if they are equal, it is replaced by another value.
 
 \subsubsection{Solving The ABA Problem}
 \label{sec:adaptations_impl:aba_problem}
 
-The ABA problem occurs when a thread employs compare-and-exchange to read a value it intends to change, gets interrupted, and, upon resuming, finds the value it initially read remains unchanged, despite potential modifications by other threads. This can lead to successfully performing a compare-and-exchange operation even when modifications during the interruption could have occurred.
+The ABA problem occurs when a thread employs compare-and-exchange to read a value it intends to change, gets interrupted, and, upon resuming, finds the value it initially read remains unchanged, despite potential modifications by other threads. Consider the following example:
+
+\begin{enumerate}
+    \item Thread 1 reads the value of a shared variable X as A and plans to change it to B.
+    \item Thread 1 is interrupted before making the change.
+    \item Thread 2 changes X from A to B and then back to A.
+    \item Thread 1 resumes, sees X still as A, and successfully changes it to B, unaware of Thread 2's modifications.
+\end{enumerate}
+
+This scenario shows how Thread 1 is misled by the apparent unchanged value, which can lead to successfully performing the compare-and-exchange operation even when modifications during the interruption have occurred.
 
 A strategy for solving the ABA problems is to ensure that all values, or pointers in the allocator, are inherently unique and used only once. This approach enables the detection of changes during thread preemption. However, pointers to blocks are not unique in the allocator and can be inserted and removed any number of times. One way to achieve pointer uniqueness is to apply a so-called version tag to each pointer, which makes it possible to uniquely identify pointers.
 
@@ -130,9 +139,7 @@ void insert_block(BlockHeader blk) {
 }
 \end{lstlisting}
 
-The process of concurrently removing a block from a free-list, as illustrated in Listing~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contains additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails without looping until successfully performing a swap, like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again, and thus loop outside the \texttt{remove\_block()} function.
-
-\newpage
+The process of concurrently removing a block from a free-list, as outlined in Listing~\ref{algorithm:concurrent_remove_block}, is similarly defined to block insertion. If the \texttt{compare\_exchange()} operation fails when removing a block, there is no guarantee that the same free-list contains additional blocks. In cases where thread preemption occurs during removal, other threads might exhaust the free-list, which will make further operations fail. To solve this, \texttt{remove\_block()} either succeeds or fails without looping until successfully performing a swap, like \texttt{insert\_block()} does. Consequently, the caller must recalculate the mapping and call \texttt{remove\_block()} again, and thus loop outside the \texttt{remove\_block()} function.
 
 \begin{lstlisting}[language=C++, caption={Concurrent removal of the head of a free-list.}, label={algorithm:concurrent_remove_block}]
 BlockHeader *remove_block(Mapping mapping) {

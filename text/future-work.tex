@@ -1,10 +1,10 @@
 
-\subsection{Integration With ZGC}
+\subsection{Integration into ZGC}
 \label{sec:future-work:integration}
 
 As highlighted throughout this report, the natural progression of this work is its integration into ZGC. As briefly mentioned in Section~\ref{sec:individual_contrubitons}, Gärds~\cite{niclas} has explored, in parallel to this work, the challenges and opportunities of integrating any free-list allocator into ZGC, though not specifically the optimized TLSF allocator. Leveraging the findings from Gärds’ research to integrate the optimized TLSF allocator into ZGC could provide comprehensive insights into its performance within the intended environment.
 
-The evaluation did not assess the concurrency aspects of the optimized allocator, focusing instead on specific improvements unrelated to concurrency. The impact of concurrency on allocator performance, especially within ZGC's concurrent operating environment, is substantial and requires a detailed examination. Future integration and testing in ZGC are imperative to fully understand and optimize these effects.
+The evaluation did not assess the concurrency aspects of the optimized allocator, focusing instead on specific improvements unrelated to concurrency. The impact of concurrency on allocator performance, especially within ZGC's concurrent operating environment, is substantial and requires a detailed examination. Future integration and testing in ZGC are needed to fully understand and optimize these effects.
 
 \subsection{Smaller Minimum Allocation Size}
 \label{sec:future-work:lilliput}
@@ -16,7 +16,7 @@ It would be impractical to use 8 bytes to store information about the size of su
 \subsection{Addressing Starvation}
 \label{sec:future-work:starvation}
 
-One of the main selling points of TLSF is its bounded worst-case performance, which makes it an attractive choice in real-time systems where long response times are undesirable. The TLSF algorithm is able to achieve its bounded performance because it has no loops in its design. However, when introducing concurrency using a lock-free mechanism, as described in Section~\ref{sec:adaptations_impl:concurrency} this is no longer the case. The lock-free implementation of the free-lists in the optimized version requires adding a loop to make sure that the CAS instruction eventually succeeds. Thus, for concurrent use-cases, the worst-case performance of the optimized allocator is not bounded and may end up in cases where all but one thread starve. 
+TLSF's feature of limiting the number of instructions for finding blocks makes it an attractive choice in real-time systems where long and unpredictable response times are undesirable~\cite{TLSF}. TLSF achieves this by having no loops in its design. However, when introducing concurrency using a lock-free mechanism, as described in Section~\ref{sec:adaptations_impl:concurrency}, this is no longer the case. The lock-free implementation of the free-lists in the optimized version requires adding a loop to ensure that the CAS instruction eventually succeeds. Thus, for concurrent use cases, the worst-case performance of the optimized allocator is not bounded and may result in situations where all but one thread starve. 
 
 To solve the issue of starvation, a strategy worth exploring is combining the lock-free implementation with a wait-free one that guarantees progress for every thread, thereby preventing starvation. Kogan and Petrank~\cite{fast_wait_free} propose a way to do this by creating fast wait-free data structures, which can be applied to the lock-free solution that designed in this work. The idea is to execute the efficient lock-free version most of the time, and execute a slower wait-free version only when things go wrong. This would make sure that per-thread progress is guaranteed and that threads do not end up starving.
 
