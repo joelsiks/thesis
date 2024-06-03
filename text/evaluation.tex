@@ -13,7 +13,7 @@ The three different versions of the TLSF allocator developed in this work that a
 
 The general and optimized versions are described by their configuration variables from the base implementation, as shown in Table~\ref{table:configuration-variables}.
 
-\begin{table}[H]
+\begin{table}[h]
     \centering
     \begin{tabular}{lp{2cm}p{6.9cm}}
     \textbf{{Configuration Variable}} & \textbf{{General}} & \textbf{{Optimized}} \\ \hline
@@ -46,9 +46,9 @@ All benchmarks are measured using wall clock time to see their execution time an
 
 \subsubsection{Benchmark Programs}
 
-Table~\ref{table:pattern-programs} shows the specific commands and versions of the programs used to benchmark the implementations. All programs except \texttt{ls} have performed their respective actions on the same file called \texttt{pi.txt}, which contains the first 10000 decimals of pi, line-broken every 100:th decimal to create 100 lines of 100 decimals. The \texttt{ls} command has been run inside a directory containing only the file \texttt{pi.txt}. The \texttt{nano} command opens \texttt{pi.txt} and exits immediately.
+Table~\ref{table:pattern-programs} shows the specific commands and versions of the programs used to benchmark the implementations. The source code for these programs, including the versions mentioned, can be downloaded and compiled from GNU's FTP server~\cite{gnuftp}. The programs \texttt{cat}, \texttt{ls}, and \texttt{wc} are available in the \texttt{coreutils} package, while the other programs are located in their respective directories.
 
-\begin{table}[H]
+\begin{table}[h]
 \centering
 \begin{tabular}{llp{10.4cm}}
 \textbf{Program} & \textbf{Version} & \textbf{Command} \\ \hline
@@ -63,6 +63,8 @@ wc   & 8.32 & wc pi.txt\\
 \label{table:pattern-programs}
 \end{table}
 
+All programs except \texttt{ls} have performed their respective actions on the same file called \texttt{pi.txt}, which contains the first 10000 decimals of pi, line-broken every 100:th decimal to create 100 lines of 100 decimals. The \texttt{ls} command has been run inside a directory containing only the file \texttt{pi.txt}. The \texttt{nano} command opens \texttt{pi.txt} and exits immediately.
+
 Benchmarking is made using the \texttt{LD\_PRELOAD} environment variable in Linux to hook into \texttt{malloc()} and \texttt{free()} and output the requests to a file, in the same order they were performed. The recorded pattern is then replayed on the different versions of the allocator in the same order they were recorded, essentially emulating the usage of the allocator in isolation.
 
 \subsection{Measuring Fragmentation}
@@ -72,6 +74,7 @@ When reasoning about internal fragmentation in the different versions of the all
 Two worst-case scenarios are examined: (1) when maximum space is wasted due to both block headers and padding, and (2) when maximum space is wasted only due to block headers. For both cases, the heap is filled with as many blocks as possible of the smallest possible allocation size. Keeping the allocation size range of ZGC small pages in mind, 17 bytes and 16 bytes are be allocated in the first and second cases respectively, since 17 bytes require maximum padding and 16 bytes require no padding.
 
 Internal fragmentation is calculated in the following way, where the total allocation consists of block header, allocation, and padding. num\_blocks is rounded down to the nearest integer since a fraction of a block cannot be created.
+
 \begin{align*}
     \text{waste} &= \text{block\_header} + \text{padding} \\\\
     \text{num\_blocks} &= \frac{2\text{MB}}{\text{block\_header + allocation + padding}} \\\\
