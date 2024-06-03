@@ -15,7 +15,7 @@ Moreover, among free-list strategies, the segregated-fits variant stands out for
 
 Lee and Chang~\cite{samsung_gc_free_list} implement a GC for C++ that keeps track of freed objects in a free-list to be able to reuse them later, similar to what is done to keep track of free memory in the mark-sweep GC algorithm. Empirical evaluation shows that most objects are small and have short lifespans, which results in many small allocations and frees, making the use of a free-list attractive to improve allocation speeds since blocks can efficiently be reused. Garbage collectors most often free memory in large chunks~\cite{gchandbook}, but in cases where freeing single pieces of memory might be considered, a free-list is a natural choice for its potential to fill sparsely populated areas.
 
-In conclusion, free-lists are already used in several places in the context of garbage collectors. As this work is meant to investigate replacing bump-pointer allocation with free-list allocation, understanding the role and implications of free-lists provides an essential foundation for continuing research in this area.
+In conclusion, free-lists are already used in several places in the context of garbage collection. As this work is meant to investigate replacing bump-pointer allocation with free-list allocation, understanding the role and implications of free-lists provides an essential foundation for continuing research in this area.
 
 %%% Local Variables:
 %%% mode: latex
