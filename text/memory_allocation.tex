@@ -15,14 +15,16 @@ An alternative to sequential allocation is free-list allocation, which involves 
 
 \begin{description}
     \item[First-fit]
-        The first block in the free-list that is large enough to fulfill the memory allocation request is selected. This method minimizes search time but does not consider the possibility of a more suitable block elsewhere in the list. This often leads to more fragmentation than is necessary, because blocks are split more often. New requests restart their search from the beginning of the list.
+        The first block in the free-list that is large enough to fulfill the memory allocation request is selected. This method minimizes search time but does not consider the possibility of a more suitable block elsewhere in the list. This often leads to more fragmentation than is necessary, because blocks are split more often. Each requests searches from the beginning of the list.
     \item[Next-fit]
         The search for a suitable block begins in the free-list, following a similar process to that described for first-fit. However, in subsequent searches, it resumes from where the previous search ended, improving efficiency when locating a new block. This strategy is based on the observation that smaller blocks tend to accumulate at the beginning of the free-list~\cite{gchandbook}, optimizing the search process by starting further into the list in each iteration.
     \item[Best-fit]
         The entire free-list is searched until the smallest available block that can fulfill a request is located. This method minimizes fragmentation by selecting the block that best matches the size of the requested memory, but it comes with the trade-off of increased search time.
 \end{description}
 
-The three policies described above have in common that when a block that is larger than requested is found, it is split up. Blocks are generally desired to be split as infrequently as possible to have larger blocks available for larger requests. If blocks are split too often, many small blocks might accumulate, which might increase external fragmentation to a level where new requests cannot be fulfilled. Additionally, splitting blocks less frequently will also mean less merging, or coalescing, of blocks to larger sizes, which could improve performance.
+The three policies described above have in common that when a block that is larger than requested is found, it is split up. 
+
+Ideally, blocks are split as rarely as possible to maintain the ability to serve large allocations. If blocks are split too often, many small blocks might accumulate, which might increase external fragmentation to a level where new requests cannot be fulfilled. Additionally, splitting blocks less frequently will also mean less merging, or coalescing, of blocks to larger sizes, which could improve performance.
 
 \subsubsection{Segregated-Fits Allocation}
 
