@@ -15,7 +15,7 @@ An alternative to sequential allocation is free-list allocation, which involves 
 
 \begin{description}
     \item[First-fit]
-        The first block in the free-list that is large enough to fulfill the memory allocation request is selected. This method minimizes search time but does not consider the possibility of a more suitable block elsewhere in the list. This often leads to more fragmentation than is necessary, because blocks are split more often. Each requests searches from the beginning of the list.
+        The first block in the free-list that is large enough to fulfill the memory allocation request is selected. This method minimizes search time but does not consider the possibility of a more suitable block elsewhere in the list. This often leads to more fragmentation than is necessary, because blocks are split more often. Each request searches from the beginning of the list.
     \item[Next-fit]
         The search for a suitable block begins in the free-list, following a similar process to that described for first-fit. However, in subsequent searches, it resumes from where the previous search ended, improving efficiency when locating a new block. This strategy is based on the observation that smaller blocks tend to accumulate at the beginning of the free-list~\cite{gchandbook}, optimizing the search process by starting further into the list in each iteration.
     \item[Best-fit]
